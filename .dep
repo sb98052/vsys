@@ -1,0 +1,16 @@
+backend.cmo: inotify.cmi globals.cmo frontend.cmo fifowatcher.cmo \
+    dirwatcher.cmo 
+backend.cmx: inotify.cmi globals.cmx frontend.cmx fifowatcher.cmx \
+    dirwatcher.cmx 
+dirwatcher.cmo: inotify.cmi globals.cmo fdwatcher.cmo 
+dirwatcher.cmx: inotify.cmi globals.cmx fdwatcher.cmx 
+fdwatcher.cmo: globals.cmo 
+fdwatcher.cmx: globals.cmx 
+fifowatcher.cmo: inotify.cmi globals.cmo fdwatcher.cmo dirwatcher.cmo 
+fifowatcher.cmx: inotify.cmi globals.cmx fdwatcher.cmx dirwatcher.cmx 
+frontend.cmo: globals.cmo fifowatcher.cmo 
+frontend.cmx: globals.cmx fifowatcher.cmx 
+main.cmo: inotify.cmi globals.cmo frontend.cmo fifowatcher.cmo fdwatcher.cmo \
+    dirwatcher.cmo backend.cmo 
+main.cmx: inotify.cmi globals.cmx frontend.cmx fifowatcher.cmx fdwatcher.cmx \
+    dirwatcher.cmx backend.cmx 
