@@ -29,6 +29,9 @@ vsys: inotify.cmxa inotify.cmi globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatc
 vsys.b: inotify.cma inotify.cmi globals.cmo fdwatcher.cmo dirwatcher.cmo fifowatcher.cmo frontend.cmo backend.cmo main.cmo
 	ocamlc -g str.cmxa unix.cma inotify.cma globals.cmo fdwatcher.cmo dirwatcher.cmo fifowatcher.cmo frontend.cmo backend.cmo str.cma main.cmo -o vsys.b
 
+install: vsys
+	cp vsys /usr/bin
+
 dep:
 	ocamldep *.ml > .dep
 
