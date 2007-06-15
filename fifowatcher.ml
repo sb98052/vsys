@@ -70,7 +70,7 @@ and receive_fifo_event eventdescriptor outdescriptor =
       | Some(str)->
           (
             try openfile str [O_WRONLY;O_NONBLOCK] 0o777 with
-                _->printf "Problemo:%s\n" str;flush Pervasives.stdout;stdout
+                _->printf "Output pipe not open, using stdout in place of %s\n" str;flush Pervasives.stdout;stdout
           )
       | None-> printf "Bug, nameless pipe\n";raise Bug
   in

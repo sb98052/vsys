@@ -1,0 +1,16 @@
+#!/bin/bash
+
+case "$1" in
+    start|restart|reload|update)
+	;;
+    stop|status)
+	exit 0
+	;;
+    *)
+	echo $"Usage: $0 {start|stop|restart|status}"
+	exit 1
+	;;
+esac
+
+# Source function library.
+. /etc/rc.d/init.d/functions
