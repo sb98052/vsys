@@ -38,7 +38,7 @@ let receive_process_event (idesc:fd_and_fname) (_:fd_and_fname) =
                   printf "Here: %d %s\n" !count curline;flush Pervasives.stdout;
                   fprintf fifo_outchan "%s\n" curline;flush fifo_outchan
               with 
-                | End_of_file|Sys_blocked_io|Unix_error(EPIPE,_,_) ->
+                | End_of_file|Sys_blocked_io|Unix_error(EPIPE,_,_)|Unix_error(EBADF,_,_) ->
                     begin
                       cont:=false
                     end

@@ -32,7 +32,7 @@ let rec list_check lst elt =
 class backendHandler dir_root (frontend_lst: frontendHandler list) =
         let mk_rel_path = delete_prefix dir_root in object(this)
 
-  val file_regexp = ref (Str.regexp "[a-zA-Z][a-zA-Z0-9_-'.']*")
+  val file_regexp = ref (Str.regexp "[a-zA-Z][a-zA-Z0-9_'.']*")
 
   method new_dir fqp func =
     let s = Unix.stat fqp in

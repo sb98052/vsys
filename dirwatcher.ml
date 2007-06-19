@@ -20,7 +20,7 @@ let handle_dir_event dirname evlist str =
         flush Pervasives.stdout
 
 let add_watch dir events handler =
-  printf "Adding watch for %s\n" dir;
+  printf "Adding watch for %s\n" dir;flush Pervasives.stdout;
   let wd = Inotify.add_watch fd dir events in
       Hashtbl.add wdmap wd (dir,handler)
 

@@ -18,7 +18,7 @@ let cmdspeclist =
 let cont = ref true
 
 let _ =
-  printf "Vsys v0.3\n";flush stdout;
+  printf "Vsys v0.4\n";flush stdout;
   Arg.parse cmdspeclist (fun x->()) "Usage: vsys <list of mount points>";  
   if (!Globals.backend == "" || !input_file_list == []) then
       printf "Try vsys --help\n"
