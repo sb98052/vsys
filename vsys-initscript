@@ -9,7 +9,7 @@ case "$1" in
         echo -n "Starting vsys:"
         if [ ! -d $backend ]; then mkdir $backend; fi
         find /vservers -maxdepth 1 -type d | perl -e 'while (<>) {if (/(\/vservers\/(.*_.*))/) {$dir=$1;if (not (-d "$dir/vsys")) {mkdir "$dir/vsys";}}}'
-        frontends=`find /vservers -maxdepth 1 -type d | perl -e 'while (<>) {if (/(\/vservers\/(.*_.*))/) {$dir=$1;$slice=$2;printf "-frontend $dir $slice "}}'`
+        frontends=`find /vservers -maxdepth 1 -type d | perl -e 'while (<>) {if (/(\/vservers\/(.*_.*))/) {$dir=$1;$slice=$2;printf "-frontend $dir/vsys $slice "}}'`
         vsys_command="/usr/bin/vsys -backend $backend $frontends"
         echo $vsys_command
         $vsys_command

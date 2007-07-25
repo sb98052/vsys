@@ -34,11 +34,19 @@ object(this)
 
   method unlink rp =
     match rp with Relpath(rel) ->
-    let fqp = String.concat "/" [root_dir;rel] in
-      Unix.unlink fqp
+    let fqp1 = String.concat "/" [root_dir;rel;".in"] in
+    let fqp2 = String.concat "/" [root_dir;rel;".out"] in
+      try 
+      Unix.unlink fqp1;
+      Unix.unlink fqp2
+      with _ ->
+        printf "Hm. %s disappeared. Never mind\n" fqp1;flush Pervasives.stdout
 
   method rmdir rp =
     match rp with Relpath(rel) ->
     let fqp = String.concat "/" [root_dir;rel] in
+      try
       Unix.rmdir fqp
+      with _ ->
+        printf "Hm. %s disappeared. Never mind\n" fqp;flush Pervasives.stdout
 end
