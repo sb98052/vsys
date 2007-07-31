@@ -5,6 +5,7 @@ open Fifowatcher
 
 class frontendHandler (root_dir,slice_name) = 
 object(this)
+  method get_slice_name () = slice_name
   method mkentry (rp:relpath) abspath perm = 
             let realperm = perm land (lnot 0o111) in
     match rp with Relpath(rel) ->

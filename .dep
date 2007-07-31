@@ -1,7 +1,3 @@
-backend.cmo: inotify.cmi globals.cmo frontend.cmo fifowatcher.cmo \
-    dirwatcher.cmo 
-backend.cmx: inotify.cmi globals.cmx frontend.cmx fifowatcher.cmx \
-    dirwatcher.cmx 
 dirwatcher.cmo: inotify.cmi globals.cmo fdwatcher.cmo 
 dirwatcher.cmx: inotify.cmi globals.cmx fdwatcher.cmx 
 fdwatcher.cmo: globals.cmo 
