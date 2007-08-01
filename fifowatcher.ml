@@ -127,11 +127,11 @@ let mkentry fqp abspath perm =
     (try 
        Unix.mkfifo (sprintf "%s.in" fqp) 0o666
      with 
-         e->printf "Error creating FIFO: %s->%s,%o\n" fqp fifoin perm;flush Pervasives.stdout;raise e);
+         e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoin;flush Pervasives.stdout);
     (try 
        Unix.mkfifo (sprintf "%s.out" fqp) 0o666
      with 
-         e->printf "Error creating FIFO: %s->%s,%o\n" fqp fifoout perm;flush Pervasives.stdout;raise e)
+         e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush Pervasives.stdout)
 
 (** Open fifos for a session *)
 let openentry fqp abspath perm =
