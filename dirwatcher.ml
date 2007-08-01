@@ -34,7 +34,7 @@ let asciiz s =
   let nulterm = findfirstnul s 0 (String.length s) in
     String.sub s 0 nulterm
 
-let receive_event (eventdescriptor:fd_and_fname) (bla:fd_and_fname) =
+let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
   let (_,fd) = eventdescriptor in
       let evs = Inotify.read fd in
         List.iter (fun x->

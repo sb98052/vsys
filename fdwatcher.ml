@@ -9,7 +9,7 @@ let cbtable = Hashtbl.create 1024
  * want to send out data, and so we keep the associated filename as well.
  * Same with input fifos. Yipee.*)
 
-let add_fd (evpair:fd_and_fname) (fd_other:fd_and_fname) (callback:fd_and_fname->fd_and_fname->unit) = 
+let add_fd (evpair:fname_and_fd) (fd_other:fname_and_fd) (callback:fname_and_fd->fname_and_fd->unit) = 
   let (fname,fd) = evpair in
   fdset := (fd::!fdset);
   Hashtbl.replace cbtable fd (callback,(evpair,fd_other))

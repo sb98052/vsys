@@ -1,26 +1,26 @@
+(** fifowatcher.ml: Routines for creating and managing fifos *)
+
 open Inotify
 open Unix
 open Globals
 open Dirwatcher
 open Printf
 
+(** A connected process, FIFO *)
 type channel_pipe = Process of out_channel | Fifo of out_channel 
+
 type signed_fd = Infd of Unix.file_descr | Outfd of Unix.file_descr
 
-(* (1) fdmap maps fifo fds -> service names, for initial read events
- * (2) pidmap maps pids of currently executing services into fds for sigchlds to
- *      prevent the appearence of zombies and to define the end of a session.
- * (3) open_fds maps read events into active services
- *)
 let fdmap: (Unix.file_descr,string*string) Hashtbl.t = Hashtbl.create 1024
 let pidmap: (int,signed_fd*signed_fd*Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
 let backend_prefix = ref ""
 let open_fds: (Unix.file_descr,channel_pipe) Hashtbl.t = Hashtbl.create 1024
 
-
-
-let receive_process_event (idesc:fd_and_fname) (_:fd_and_fname) =
-  printf "Process event\n";flush Pervasives.stdout;
+(** Receive an event from a running script. This event must be relayed to the
+  slice that invoked it 
+  @param idesc fd/fname identifier for process
+  *)
+let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
   let (_,ifd) = idesc in
   let cp = try Hashtbl.find open_fds ifd with
       Not_found->
@@ -35,7 +35,6 @@ let receive_process_event (idesc:fd_and_fname) (_:fd_and_fname) =
             while (!cont) do
               try 
                 let curline = input_line process_inchan in
-                  printf "Here: %d %s\n" !count curline;flush Pervasives.stdout;
                   fprintf fifo_outchan "%s\n" curline;flush fifo_outchan
               with 
                 | End_of_file|Sys_blocked_io|Unix_error(EPIPE,_,_)|Unix_error(EBADF,_,_) ->
@@ -43,7 +42,7 @@ let receive_process_event (idesc:fd_and_fname) (_:fd_and_fname) =
                       cont:=false
                     end
                 | Unix_error(_,s1,s2) -> printf "Unix error %s - %s\n" s1 s2;flush Pervasives.stdout;cont:=false
-                | e -> printf "Error!!!\n";raise e
+                | e -> printf "Error - received unexpected event from file system !!!\n";raise e
             done
       | _ -> printf "Bug! Process fd received in the channel handler\n";raise Bug
 
@@ -111,7 +110,7 @@ and receive_fifo_event eventdescriptor outdescriptor =
                             printf "Race condition -> user deleted file before closing it. Clever ploy, but won't work.\n";
                             flush Pervasives.stdout
                     );
-                      cont:=false
+                    cont:=false
                 |Sys_blocked_io ->printf "Sysblockedio\n";flush Pervasives.stdout;
                                   cont:=false
                 | _ ->printf "Bug: unhandled exception\n";flush Pervasives.stdout;raise Bug
@@ -134,7 +133,7 @@ let mkentry fqp abspath perm =
      with 
          e->printf "Error creating FIFO: %s->%s,%o\n" fqp fifoout perm;flush Pervasives.stdout;raise e)
 
-
+(** Open fifos for a session *)
 let openentry fqp abspath perm =
   let fifoin = String.concat "." [fqp;"in"] in
   let fifoout = String.concat "." [fqp;"out"] in
@@ -156,8 +155,6 @@ let sigchld_handle s =
     with 
         Not_found-> (* Do nothing, probably a grandchild *)
           ()
-
-
 
 let initialize () = 
   Sys.set_signal Sys.sigchld (Sys.Signal_handle sigchld_handle)

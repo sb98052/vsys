@@ -24,7 +24,8 @@ include .dep
 	ocamllex $< 
 
 docs: *.ml
-	cd docs && ocamldoc -d . -html ../*.ml
+	ocamldoc -d . -html -o docs *.ml
+	mv *.html docs
 
 vsys: inotify.cmxa inotify.cmi globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx main.cmx docs
 	ocamlopt str.cmxa unix.cmxa inotify.cmxa globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx str.cmxa main.cmx -o vsys
