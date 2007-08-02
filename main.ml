@@ -1,3 +1,4 @@
+(** main () *)
 open Globals
 open Printf
 open Inotify

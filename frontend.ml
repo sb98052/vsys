@@ -21,8 +21,11 @@ object(this)
             let realperm = perm land (lnot 0o111) in
     match rp with Relpath(rel) ->
       let fqp = String.concat "/" [root_dir;rel] in
-         Fifowatcher.mkentry fqp abspath realperm;
-         Fifowatcher.openentry fqp (abspath,slice_name) realperm
+      let res = Fifowatcher.mkentry fqp abspath realperm in
+        match res with 
+          | Success ->
+              Fifowatcher.openentry fqp (abspath,slice_name) realperm
+          | _ -> ()
 
   (** A new directory was created at the backend, make a corresponding directory
     at the frontend. Refer to mkentry for parameters *)

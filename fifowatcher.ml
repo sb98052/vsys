@@ -7,31 +7,34 @@ open Dirwatcher
 open Printf
 
 (** A connected process, FIFO *)
-type channel_pipe = Process of out_channel | Fifo of out_channel 
-
-type signed_fd = Infd of Unix.file_descr | Outfd of Unix.file_descr
+type channel_pipe = Process of out_channel | Fifo of out_channel | BrokenPipe
+(** Signed file descriptors. Usually, we'll make sure that they're not
+  mistreated *)
+type signed_fd = Infd of Unix.file_descr | Outfd of Unix.file_descr | Eventfd of Unix.file_descr
 
 let fdmap: (Unix.file_descr,string*string) Hashtbl.t = Hashtbl.create 1024
-let pidmap: (int,signed_fd*signed_fd*Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
+(** Maps pids to slice connections. Needed to clean up fds when a script dies
+  with EPIPE *)
+let pidmap: (int,signed_fd list) Hashtbl.t = Hashtbl.create 1024
 let backend_prefix = ref ""
 let open_fds: (Unix.file_descr,channel_pipe) Hashtbl.t = Hashtbl.create 1024
 
+
 (** Receive an event from a running script. This event must be relayed to the
-  slice that invoked it 
+  slice that invoked it.
+
   @param idesc fd/fname identifier for process
   *)
 let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
   let (_,ifd) = idesc in
   let cp = try Hashtbl.find open_fds ifd with
       Not_found->
-        printf "Fifo fd disappeared\n";raise Bug
+        printf "Fifo fd disappeared\n";flush Pervasives.stdout;raise Bug
   in
     match (cp) with 
       | Fifo(fifo_outchan) ->
           let process_inchan = in_channel_of_descr ifd in
           let cont = ref true in
-          let count = ref 0 in
-            count:=!count + 1;
             while (!cont) do
               try 
                 let curline = input_line process_inchan in
@@ -42,9 +45,10 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
                       cont:=false
                     end
                 | Unix_error(_,s1,s2) -> printf "Unix error %s - %s\n" s1 s2;flush Pervasives.stdout;cont:=false
+                | Sys_error(s) -> (* We get this error if the EPIPE comes before the EOF marker*) cont:=false
                 | e -> printf "Error - received unexpected event from file system !!!\n";raise e
             done
-      | _ -> printf "Bug! Process fd received in the channel handler\n";raise Bug
+      | _ -> printf "Bug! Process fd received in the channel handler\n";flush Pervasives.stdout;raise Bug
 
 
 let rec openentry_int fifoin fifoout (abspath:string*string) =
@@ -61,9 +65,15 @@ and reopenentry_int fdin fifoin fifoout =
       Hashtbl.find fdmap fdin with _ -> printf "Bug: Phantom pipe\n";flush Pervasives.stdout;raise Bug
     in
       openentry_int fifoin fifoout abspath
+(** receive an event from a fifo and connect to the corresponding service, or to
+  create it if it doesn't exit 
+  @param eventdescriptor Name of input pipe,in descriptor
+  @param outdescriptor Name of output pipe, out descriptor
+  *)
 and receive_fifo_event eventdescriptor outdescriptor =
-  let evfname,evfd = eventdescriptor in
+  let (evfname,evfd) = eventdescriptor in
   let (fname_other,fd_other) = outdescriptor in
+  (* Open the output pipe, or use stdout instead *)
   let outfd =
     match (fname_other) with
       | Some(str)->
@@ -71,24 +81,39 @@ and receive_fifo_event eventdescriptor outdescriptor =
             try openfile str [O_WRONLY;O_NONBLOCK] 0o777 with
                 _->printf "Output pipe not open, using stdout in place of %s\n" str;flush Pervasives.stdout;stdout
           )
-      | None-> printf "Bug, nameless pipe\n";raise Bug
+      | None-> printf "Bug, nameless pipe\n";flush Pervasives.stdout;raise Bug
   in
+  (* Check if the input descriptor is already registered (=> a session is open).
+   If not, register it and start a new session.*)
   let pipe = try Hashtbl.find open_fds evfd with
     | Not_found ->
-        (* This is a fifo fd for sure *)
+        (* Ok, need to launch script *)
         let execpath,slice_name = Hashtbl.find fdmap evfd in
-        (* Spawn server. We assume that the fd is one fifo opened RW *)
-        let (myinfd,pout) = Unix.pipe () in
-        let (pin,myoutfd) = Unix.pipe () in
-          set_nonblock myinfd;
-          let pid = try create_process execpath [|execpath;slice_name|] pin pout pout with e -> printf "Error executing service: %s\n" execpath;flush Pervasives.stdout;raise e
+        let (script_infd,pout) = Unix.pipe () in
+        let (pin,script_outfd) = Unix.pipe () in
+          set_nonblock script_infd;
+          let rpid = try Some(create_process execpath [|execpath;slice_name|] pin pout pout) with e -> printf "Error executing service: %s\n" execpath;flush Pervasives.stdout;None
           in
-            Hashtbl.add pidmap pid (Infd(myinfd),Outfd(myoutfd),evfd);
-            Hashtbl.add open_fds evfd (Process(out_channel_of_descr myoutfd));
-            Hashtbl.add open_fds myinfd (Fifo(out_channel_of_descr outfd));
-            Fdwatcher.add_fd (None,myinfd) (None,myinfd) receive_process_event;
-            (Process(out_channel_of_descr myoutfd))
+            match rpid with
+              | None-> BrokenPipe
+              | Some(pid)->
+                  (* Register fds associated with pid so that they can be cleaned up
+                   * when it dies *)
+                  Hashtbl.add pidmap pid [Infd(script_infd);Outfd(script_outfd);Eventfd(evfd)];
+
+                  (* Connect pipe to running script *)
+                  Hashtbl.add open_fds evfd (Process(out_channel_of_descr script_outfd));
+
+                  (* Connect the running script to the pipe *)
+                  Hashtbl.add open_fds script_infd (Fifo(out_channel_of_descr outfd));
+
+                  (* Activate running script *)
+                  Fdwatcher.add_fd (None,script_infd) (None,script_infd) receive_process_event;
+
+                  (Process(out_channel_of_descr script_outfd))
   in
+  (* We have the connection to the process - because it was open, or because it
+   just got established *)
   let inchan_fd = in_channel_of_descr evfd in
     match (pipe) with
       | Process(out_channel) -> 
@@ -103,6 +128,7 @@ and receive_fifo_event eventdescriptor outdescriptor =
                     (
                       match (evfname,fname_other) with
                         | Some(str1),Some(str2)->
+                            printf "Reopening entry\n";flush Pervasives.stdout;
                             reopenentry_int evfd str1 str2
                         | Some(str1),None ->
                             printf "Bug, nameless pipe\n";flush Pervasives.stdout;raise Bug
@@ -115,9 +141,11 @@ and receive_fifo_event eventdescriptor outdescriptor =
                                   cont:=false
                 | _ ->printf "Bug: unhandled exception\n";flush Pervasives.stdout;raise Bug
             done
-      | _ -> printf "BUG! received process event from fifo\n";raise Bug
+      | BrokenPipe -> ()
+      | Fifo(_) -> printf "BUG! received process event from fifo\n";raise Bug
 
 
+(** Make a pair of fifo entries *)
 let mkentry fqp abspath perm = 
   printf "Making entry %s->%s\n" fqp abspath;flush Pervasives.stdout;
   let fifoin=sprintf "%s.in" fqp in
@@ -125,15 +153,13 @@ let mkentry fqp abspath perm =
     (try Unix.unlink fifoin with _ -> ());
     (try Unix.unlink fifoout with _ -> ());
     (try 
-       Unix.mkfifo (sprintf "%s.in" fqp) 0o666
+       Unix.mkfifo (sprintf "%s.in" fqp) 0o666;
+       Unix.mkfifo (sprintf "%s.out" fqp) 0o666;
+       Success
      with 
-         e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoin;flush Pervasives.stdout);
-    (try 
-       Unix.mkfifo (sprintf "%s.out" fqp) 0o666
-     with 
-         e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush Pervasives.stdout)
+         e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush Pervasives.stdout;Failed)
 
-(** Open fifos for a session *)
+(** Open fifos for a session. Will shutdown vsys if the fifos don't exist *)
 let openentry fqp abspath perm =
   let fifoin = String.concat "." [fqp;"in"] in
   let fifoout = String.concat "." [fqp;"out"] in
@@ -142,16 +168,19 @@ let openentry fqp abspath perm =
 let sigchld_handle s =
   let pid,_=Unix.waitpid [Unix.WNOHANG] 0 in
     try
-      let value = Hashtbl.find pidmap pid in
-        match value with
-          | (Infd(ifd),Outfd(ofd),fd) ->
-              close(ifd);close(ofd);
-              Hashtbl.remove open_fds fd;
-              Fdwatcher.del_fd ifd;
-              Hashtbl.remove pidmap pid
-          | _ -> printf "BUG! Got fds in the wrong order\n";
-                 flush Pervasives.stdout;
-                 raise Bug
+      let sfd_list = Hashtbl.find pidmap pid in
+      let handle_sfd sfd =
+        match sfd with
+          | Infd(fd) ->
+              close fd;
+              Fdwatcher.del_fd fd
+          | Outfd(fd)->
+              close fd
+          | Eventfd(fd)->
+              Hashtbl.remove open_fds fd (* Disconnect pipe *)
+      in
+        List.iter handle_sfd sfd_list;
+        Hashtbl.remove pidmap pid
     with 
         Not_found-> (* Do nothing, probably a grandchild *)
           ()

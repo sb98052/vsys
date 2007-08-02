@@ -1,3 +1,6 @@
+(* Fdwatcher - The main event loop. Agnostic to the type of file descriptors
+ involved.*)
+
 open Printf
 open Globals
 
@@ -8,7 +11,6 @@ let cbtable = Hashtbl.create 1024
  * fifo outputs, the out descriptor must be opened a nouveau whenever we
  * want to send out data, and so we keep the associated filename as well.
  * Same with input fifos. Yipee.*)
-
 let add_fd (evpair:fname_and_fd) (fd_other:fname_and_fd) (callback:fname_and_fd->fname_and_fd->unit) = 
   let (fname,fd) = evpair in
   fdset := (fd::!fdset);
