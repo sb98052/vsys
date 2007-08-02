@@ -1,4 +1,4 @@
-all: vsys
+all: vsys vsyssh ocaml_inotify-0.4
 
 include .dep
 
