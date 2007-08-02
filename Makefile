@@ -1,4 +1,4 @@
-all: vsys vsyssh ocaml_inotify-0.4
+all: vsys 
 
 include .dep
 
@@ -27,8 +27,11 @@ docs: *.ml
 	ocamldoc -d . -html -o docs *.ml
 	mv *.html docs
 
-vsys: inotify.cmxa inotify.cmi globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx main.cmx docs
-	ocamlopt str.cmxa unix.cmxa inotify.cmxa globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx str.cmxa main.cmx -o vsys
+ocaml_inotify-0.4/inotify.cmxa:
+	$(MAKE) -C ocaml_inotify-0.4 && cp -f ocaml_inotify-0.4/inotify_stubs.o ./
+
+vsys: ocaml_inotify-0.4/inotify.cmxa globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx main.cmx docs
+	ocamlopt -I ocaml_inotify-0.4 str.cmxa unix.cmxa inotify.cmxa globals.cmx fdwatcher.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx str.cmxa main.cmx -o vsys
 
 vsys.b: inotify.cma inotify.cmi globals.ml fdwatcher.ml dirwatcher.ml fifowatcher.ml frontend.ml backend.ml main.ml
 	ocamlc -g str.cma unix.cma inotify.cma globals.cmo fdwatcher.cmo dirwatcher.cmo fifowatcher.cmo frontend.cmo backend.cmo str.cma main.cmo -o vsys.b
@@ -42,4 +45,5 @@ dep:
 	ocamldep *.ml > .dep
 
 clean:
-	rm -fR *.cmi *.cmx sys usys 
+	$(MAKE) -C ocaml_inotify-0.4 clean
+	rm -fR *.cmi *.cmx sys usys *.o vsys vsys.b
