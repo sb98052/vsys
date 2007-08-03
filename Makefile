@@ -25,7 +25,7 @@ include .dep
 
 docs: *.ml
 	ocamldoc -d . -html -o docs *.ml
-	mv *.html docs
+	mv *.html *.css docs
 
 ocaml_inotify-0.4/inotify.cmxa:
 	$(MAKE) -C ocaml_inotify-0.4 && cp -f ocaml_inotify-0.4/inotify_stubs.o ./
@@ -46,4 +46,4 @@ dep:
 
 clean:
 	$(MAKE) -C ocaml_inotify-0.4 clean
-	rm -fR *.cmi *.cmx sys usys *.o vsys vsys.b
+	rm -f *.cmi *.cmx sys usys *.o vsys vsys.b *.html *.css docs/*

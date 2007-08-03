@@ -1,3 +1,5 @@
+(** Watches directories for events. Agnostic to vsys semantics of backends and
+frontends *)
 open Inotify
 open Fdwatcher
 open Printf
