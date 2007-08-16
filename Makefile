@@ -46,4 +46,4 @@ dep:
 
 clean:
 	$(MAKE) -C ocaml_inotify-0.4 clean
-	rm -f *.cmi *.cmx sys usys *.o vsys vsys.b *.html *.css docs/*
+	rm -f *.cmi *.cmx sys usys *.o vsys vsys.b *.html *.css 

@@ -1,3 +1,4 @@
+(** Some things that didn't fit in elsewhere *)
 let backend = ref ""
 let debug = ref true
 let vsys_version = "0.5"

@@ -1,4 +1,4 @@
-(* Fdwatcher - The main event loop. Agnostic to the type of file descriptors
+(** Fdwatcher - The main event loop. Agnostic to the type of file descriptors
  involved.*)
 
 open Printf
