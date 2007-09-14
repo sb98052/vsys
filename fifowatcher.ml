@@ -146,16 +146,24 @@ and receive_fifo_event eventdescriptor outdescriptor =
 
 
 (** Make a pair of fifo entries *)
-let mkentry fqp abspath perm = 
+let mkentry fqp abspath perm uname = 
   printf "Making entry %s->%s\n" fqp abspath;flush Pervasives.stdout;
   let fifoin=sprintf "%s.in" fqp in
   let fifoout=sprintf "%s.out" fqp in
     (try Unix.unlink fifoin with _ -> ());
     (try Unix.unlink fifoout with _ -> ());
     (try 
-       Unix.mkfifo (sprintf "%s.in" fqp) 0o666;
-       Unix.mkfifo (sprintf "%s.out" fqp) 0o666;
-       Success
+       let infname =(sprintf "%s.in" fqp) in
+       let outfname =(sprintf "%s.out" fqp) in
+         Unix.mkfifo infname 0o666;
+         Unix.mkfifo outfname 0o666;
+         ( (* Make the user the owner of the pipes in a non-chroot environment *)
+         if (!Globals.nochroot) then
+           let pwentry = Unix.getpwnam uname in
+             Unix.chown infname pwentry.pw_uid pwentry.pw_gid; 
+             Unix.chown outfname pwentry.pw_uid pwentry.pw_gid
+         );
+         Success
      with 
          e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush Pervasives.stdout;Failed)
 

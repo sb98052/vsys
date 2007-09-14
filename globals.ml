@@ -2,6 +2,7 @@
 let backend = ref ""
 let debug = ref true
 let vsys_version = "0.5"
+let nochroot = ref false
 
 type result = Success | Failed
 

@@ -13,7 +13,8 @@ let cur_slice = ref ""
 let cmdspeclist =
   [
     ("-backend",Arg.Set_string(Globals.backend), "Backend directory");
-    ("-frontend",Arg.Tuple[Arg.String(fun s->cur_dir:=s);Arg.String(fun s->cur_slice:=s;input_file_list:=(!cur_dir,!cur_slice)::!input_file_list)], "frontendN,slicenameN")
+    ("-frontend",Arg.Tuple[Arg.String(fun s->cur_dir:=s);Arg.String(fun s->cur_slice:=s;input_file_list:=(!cur_dir,!cur_slice)::!input_file_list)], "frontendN,slicenameN");
+    ("-nochroot",Arg.Set(Globals.nochroot), "Run in non-chroot environment")
   ]
 
 let cont = ref true
