@@ -12,6 +12,7 @@
 #include <sys/syscall.h>
 #include <sys/wait.h>
 #include <sys/time.h>
+#include <sys/select.h>
 #include <sys/resource.h>
 #include <sys/mount.h>
 #include <sys/vfs.h>
@@ -23,7 +24,7 @@
 
 int main(int argc, char **argv, char **envp)
 {
-	if (argc<3) {
+	if (argc<2) {
 		printf("Usage: vsyssh <vsys entry> <cmd>\n");
 		exit(1);
 	}
@@ -45,13 +46,40 @@ int main(int argc, char **argv, char **envp)
 			exit(1);
 		}
 
-		close(0);
-		close(1);
+		
+		if (argc<3) {
+			fd_set set;
+			FD_ZERO(&set);
+			FD_SET(0,&set);
+			FD_SET(vfd0,&set);
+			while (1) {
+				int ret;
+				ret = select(2, &set, NULL, NULL, NULL);
+				if (FD_ISSET(0,&set)) {
+					char lineread[2048];
+					int ret;
+					ret=read(0,lineread,2048);
+					write(vfd1,lineread,ret);
+					FD_CLR(0,&set);
+				}
+				else if (FD_ISSET(vfd0,&set)) {
+					char lineread[2048];
+					int ret;
+					ret=read(vfd0,lineread,2048);
+					write(1,lineread,ret);
+					FD_CLR(vfd0,&set);
+				}
+			}
 
-		dup2(vfd0,0);
-		dup2(vfd1,1);
+		}
+		else {
+			close(0);
+			close(1);
 
-		execve(argv[3],argv+3,envp);
+			dup2(vfd0,0);
+			dup2(vfd1,1);
+			execve(argv[3],argv+3,envp);
+		}
        }
 
        return;
