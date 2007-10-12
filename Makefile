@@ -37,9 +37,8 @@ vsys.b: inotify.cma inotify.cmi globals.ml fdwatcher.ml dirwatcher.ml fifowatche
 	ocamlc -g str.cma unix.cma inotify.cma globals.cmo fdwatcher.cmo dirwatcher.cmo fifowatcher.cmo frontend.cmo backend.cmo str.cma main.cmo -o vsys.b
 
 install: vsys
-	cp vsys /usr/bin
-	cp vsys.b /usr/bin
-	cp vsys-initscript /etc/init.d/vsys 
+	cp vsys $(INSTALL_DIR)/usr/bin
+	cp vsys-initscript $(INSTALL_DIR)/etc/init.d/vsys 
 
 dep:
 	ocamldep *.ml > .dep
