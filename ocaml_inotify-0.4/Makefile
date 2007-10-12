@@ -33,7 +33,7 @@ inotify.cmxa: inotify_stubs.o inotify.cmx
 	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c -o $@ $<
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) -I /usr/lib/ocaml $(CFLAGS) -c -o $@ $<
 
 test.inotify: inotify.cmxa test.inotify.ml
 	$(OCAMLOPT) -o $@ unix.cmxa $+
