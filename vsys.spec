@@ -40,8 +40,6 @@ rm -rf $RPM_BUILD_ROOT
 make
 
 %install
-mkdir -p ${RPM_BUILD_ROOT}/usr/bin
-make -DINSTALL_DIR=$RPM_BUILD_ROOT install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
