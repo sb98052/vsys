@@ -40,6 +40,10 @@ rm -rf $RPM_BUILD_ROOT
 make
 
 %install
+mkdir -p $RPM_BUILD_ROOT/usr/bin
+mkdir -p $RPM_BUILD_ROOT/etc/init.d
+cp vsys $RPM_BUILD_ROOT/usr/bin
+cp vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
 
 %clean
 rm -rf $RPM_BUILD_ROOT
