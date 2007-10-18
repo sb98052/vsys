@@ -24,7 +24,7 @@ Group: System Environment/Kernel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 #Requires: 
 
-Source0: vsys.tar.gz
+Source0: vsys-%{version}.tar.gz
 
 %description
 vsys is a file-system-based interface that lets slices on PlanetLab safely
