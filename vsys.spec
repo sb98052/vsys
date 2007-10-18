@@ -7,7 +7,7 @@
 #
 
 %define name vsys
-%define version 0.4
+%define version 0.6
 %define release 2%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
 Vendor: PlanetLab
@@ -24,7 +24,7 @@ Group: System Environment/Kernel
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 #Requires: 
 
-Source0: vsys-%{version}.tar.gz
+Source0: vsys.tar.gz
 
 %description
 vsys is a file-system-based interface that lets slices on PlanetLab safely
