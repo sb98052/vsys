@@ -34,7 +34,7 @@ int main(int argc, char **argv, char **envp)
 		inf=(char *)malloc(strlen(argv[1])+3);
 		outf=(char *)malloc(strlen(argv[2])+4);
 		strcpy(inf,argv[1]);
-		strcpy(inf,argv[2]);
+		strcpy(outf,argv[2]);
 		strcat(inf,".in");
 		strcat(outf,".out");
 
