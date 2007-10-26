@@ -1,0 +1,54 @@
+How to use vsys
+---------------
+
+Every instance of vsys has 1 backend and several frontends. The backend is a directory in which the scripts are stored.
+The frontends are directories in which these scripts appear as pipes and can be used to command and communicate with the
+scripts.
+
+eg. in a Vserver environment, the backed could be a /vsys directory in root context and a frontend could be chrooted directories of vserver hosts (eg. /vservers/pl_netflow). vsys is started as:
+
+vsys -backend <backend dir> -conffile <someconffile> 
+
+conffile contains the list of frontends, in the format <directory> <slice name> with each entry on a newline.
+
+A script can communicate with the process in the slice that's invoking it by reading from stdin and writing to stdout, both of which are connected to the pipe inside of the slice. If the stdout part of the pipe is not opened by the slice, then the output of the script is directed into the log file. stderr is treated in the same way.
+
+To summarize the properties of a vsys script:
+
+cmdline: 
+	- first argument : name of slice, specified as part of the frontends
+
+stdin:
+	- input from the slice
+
+stdout: 
+	- output to the slice
+
+
+eg. if the following script: 
+
+#!/bin/sh
+
+read a
+echo $a $1
+
+were to be called foo, then it would show up in the frontends as two pipe files: foo.in, the input pipe and foo.out, the output pipe. to invoke the script, the slice would write data into foo.in, and to receive the output of the script, it would
+read from foo.out. 
+
+scripts are deployed and removed dynamically. if you copy foo into the backend, foo.in and foo.out will show pu immediately.
+scripts can be organized as directories. eg. mkdir bla in the backend will cause a directory to be created in the frontend.
+
+access to vsys scripts can be controlled through acls. an acl has the following format:
+
+name: <scriptname>.acl (so if your script is called foo, then the acl will be
+called foo.acl). The acl for a script must be located in the same directory as the script (not in
+a parent or sub directory). It should be ***CREATED BEFORE THE SCRIPT***. 
+
+contents: names of slices on new lines
+
+
+
+
+
+
+
