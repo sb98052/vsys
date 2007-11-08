@@ -58,8 +58,13 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        let s = Unix.stat fqp in
          List.iter 
            (fun frontend->
-              frontend#mkdir (mk_rel_path fqp) (s.st_perm);
-              Dirwatcher.add_watch fqp [S_Create;S_Delete] (Some(func)))
+              try begin 
+                frontend#mkdir (mk_rel_path fqp) (s.st_perm);
+                Dirwatcher.add_watch fqp [S_Create;S_Delete] (Some(func)) 
+              end
+              with _ ->
+                printf "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;flush Pervasives.stdout;
+           )
            slice_list
 
      (** Somebody copied in a new script *)
