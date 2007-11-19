@@ -7,7 +7,7 @@
 #
 
 %define name vsys
-%define version 0.6
+%define version 0.7
 %define release 2%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
 Vendor: PlanetLab
