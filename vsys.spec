@@ -25,7 +25,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 #Requires: 
 BuildRequires: inotify-tools-devel
 BuildRequires: ocaml
-BuildRequires: ocaml-ocamldocs
+BuildRequires: ocaml-docs
 
 Source0: vsys-%{version}.tar.gz
 
