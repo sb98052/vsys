@@ -3,17 +3,21 @@
 #
 # RPM spec file
 #
-# $Id: vsys.spec,v 1.40 2007/04/03 02:08:55 mef Exp $
+# $Id$
 #
+
+%define url $URL$
 
 %define name vsys
 %define version 0.7
-%define release 2%{?pldistro:.%{pldistro}}%{?date:.%{date}}
+%define taglevel 2
+
+%define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
 Vendor: PlanetLab
 Packager: PlanetLab Central <support@planet-lab.org>
-Distribution: PlanetLab 4.0
-URL: http://cvs.planet-lab.org/cvs/vsys
+Distribution: PlanetLab %{plrelease}
+URL: %(echo %{url} | cut -d ' ' -f 2)
 
 Summary: Vsys filesystem 
 Name: %{name}
