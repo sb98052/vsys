@@ -30,7 +30,7 @@ case "$1" in
     start)
         echo -n "Starting $name:"
         if [ ! -d $backend ]; then mkdir $backend; fi
-        daemon --check=vsys $vsys "$@"
+        daemon --check=vsys $vsys &
         RETVAL=$?
         echo
         [ $RETVAL -eq 0 ] && touch ${lockfile}
