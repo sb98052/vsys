@@ -43,11 +43,12 @@ case "$1" in
         [ $RETVAL -eq 0 ] && rm -f ${lockfile} ${pidfile}
         ;;
     restart)
-        stop
-        start
+        $0 stop
+        $0 start
+        RETVAL=$?
         ;;
     *)
-        echo $"Usage: $0 {start|stop}"
+        echo $"Usage: $0 {start|stop|restart}"
         exit 1
         ;;
 esac
