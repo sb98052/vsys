@@ -41,8 +41,8 @@ object(this)
                 end
               else if (s.st_perm <> perm) then
                 begin
-                        printf "Removing directory %s\n" fqp;
-                        flush Pervasives.stdout;
+                        fprintf logfd "Removing directory %s\n" fqp;
+                        flush logfd;
                         Unix.rmdir fqp;
                         Unix.mkdir fqp perm
                 end
@@ -60,7 +60,7 @@ object(this)
         Unix.unlink fqp1;
         Unix.unlink fqp2
       with _ ->
-        printf "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp1 (this#get_slice_name ());flush Pervasives.stdout
+        fprintf logfd "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp1 (this#get_slice_name ());flush logfd
 
   method rmdir rp =
     match rp with Relpath(rel) ->
@@ -68,5 +68,5 @@ object(this)
       try
       Unix.rmdir fqp
       with _ ->
-        printf "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ());flush Pervasives.stdout
+        fprintf logfd "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ());flush logfd
 end

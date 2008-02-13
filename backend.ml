@@ -63,7 +63,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                 Dirwatcher.add_watch fqp [S_Create;S_Delete] (Some(func)) 
               end
               with _ ->
-                printf "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;flush Pervasives.stdout;
+                fprintf logfd "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;flush logfd;
            )
            slice_list
 
@@ -171,7 +171,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                        | S_REG ->
                            this#new_script slice_list fqp
                        | _ ->
-                           printf "Don't know what to do with %s\n" curfile;flush Pervasives.stdout
+                           fprintf logfd "Don't know what to do with %s\n" curfile;flush logfd
                    end
            with 
                _->cont:=false;()

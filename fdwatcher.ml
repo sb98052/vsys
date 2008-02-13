@@ -18,7 +18,7 @@ let add_fd (evpair:fname_and_fd) (fd_other:fname_and_fd) (callback:fname_and_fd-
 
 let del_fd fd =
   fdset:=List.filter (fun l->l<>fd) !fdset;
-  flush Pervasives.stdout
+  flush logfd
 
 let start_watch () =
     while (true)
@@ -31,4 +31,3 @@ let start_watch () =
                              let (func,(evd,fd_other)) = Hashtbl.find cbtable elt in
                                func evd fd_other) fds
     done
-

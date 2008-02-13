@@ -1,12 +1,12 @@
 open Printf
+open Globals
 open Scanf
 
 let split_conf_line s =
   sscanf s "%s %s" (fun s1 s2->(s1,s2))
 
 let read_frontends f =
-  let f_file = try open_in f with e -> printf "Could not open config
-                                         file\n";flush Pervasives.stdout;raise e
+  let f_file = try open_in f with e -> fprintf logfd "Could not open config file\n";flush logfd;raise e
   in
   let rec read_conf_file cur_list =
     let next_line = try Some(input_line f_file) with _ -> None in

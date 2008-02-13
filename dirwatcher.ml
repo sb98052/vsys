@@ -15,14 +15,14 @@ let fd = Inotify.init ()
 
 let handle_dir_event dirname evlist str = 
     let fname = String.concat "/" [dirname;str] in
-        printf "File: %s. " fname;List.iter 
+        fprintf logfd "File: %s. " fname;List.iter 
                   (fun e -> 
-                     printf "Event: %s\n" (string_of_event e)) 
+                     fprintf logfd "Event: %s\n" (string_of_event e)) 
                   evlist;
-        flush Pervasives.stdout
+        flush logfd
 
 let add_watch dir events handler =
-  printf "Adding watch for %s\n" dir;flush Pervasives.stdout;
+  fprintf logfd "Adding watch for %s\n" dir;flush logfd;
   let wd = Inotify.add_watch fd dir events in
       Hashtbl.add wdmap wd (dir,handler)
 
@@ -44,7 +44,7 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                   | (wd,evlist,_,Some(str)) ->
                       let purestr = asciiz(str) in
                       let (dirname,handler) = 
-                        try Hashtbl.find wdmap wd with Not_found->printf "Unknown watch descriptor\n";raise Not_found
+                        try Hashtbl.find wdmap wd with Not_found->fprintf logfd "Unknown watch descriptor\n";raise Not_found
                       in
                         (
                         match handler with
