@@ -38,6 +38,7 @@ case "$1" in
     stop)
         echo -n "Stopping $name:"
         killproc $name
+        killproc $name
         RETVAL=$?
         echo
         [ $RETVAL -eq 0 ] && rm -f ${lockfile} ${pidfile}

@@ -25,36 +25,41 @@
 int main(int argc, char **argv, char **envp)
 {
 	if (argc<2) {
-		printf("Usage: vsyssh <vsys entry> <cmd>\n");
+		printf("Usage: vsyssh <vsys entry> [cmd]\n");
 		exit(1);
 	}
 	else {
 		int vfd0,vfd1;
 		char *inf,*outf;
+		struct timeval tv;
+
 		inf=(char *)malloc(strlen(argv[1])+3);
-		outf=(char *)malloc(strlen(argv[2])+4);
+		outf=(char *)malloc(strlen(argv[1])+4);
 		strcpy(inf,argv[1]);
-		strcpy(outf,argv[2]);
+		strcpy(outf,argv[1]);
 		strcat(inf,".in");
 		strcat(outf,".out");
+		tv.tv_sec = 100;
+		tv.tv_usec = 0;
 
-		vfd1 = open(inf,O_WRONLY);
-		vfd0 = open(outf,O_RDONLY);
+		vfd1 = open(inf,O_WRONLY|O_NONBLOCK);
+		vfd0 = open(outf,O_RDONLY|O_NONBLOCK);
 
 		if (vfd0==-1 || vfd1 == -1) {
 			printf("Error opening vsys entry %s\n", argv[1]);
 			exit(1);
 		}
 
-		
 		if (argc<3) {
 			fd_set set;
 			FD_ZERO(&set);
-			FD_SET(0,&set);
-			FD_SET(vfd0,&set);
+			FD_SET(0, &set);
+			FD_SET(vfd0, &set);
+
 			while (1) {
 				int ret;
-				ret = select(2, &set, NULL, NULL, NULL);
+				printf("vsys>");
+				ret = select(vfd0+1, &set, NULL, NULL, &tv);
 				if (FD_ISSET(0,&set)) {
 					char lineread[2048];
 					int ret;
