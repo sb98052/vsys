@@ -139,7 +139,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                                     frontend#rmdir (mk_rel_path fqp)) slice_list
                      end
                    else List.iter (fun frontend ->
-                                     frontend#unlink (mk_rel_path fqp)) slice_list
+                                     fprintf logfd "Unlinking %s\n" fqp;flush Pervasives.stdout;frontend#unlink (mk_rel_path fqp)) slice_list
                  end
            end
          else (* regex not matched *)

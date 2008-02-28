@@ -54,11 +54,13 @@ object(this)
   (** *)
   method unlink rp =
     match rp with Relpath(rel) ->
-    let fqp1 = String.concat "/" [root_dir;rel;".in"] in
-    let fqp2 = String.concat "/" [root_dir;rel;".out"] in
+    let fqp1 = String.concat "/" [root_dir;rel] in
+    let fqp_in = String.concat "." [fqp1;"in"] in
+    let fqp2 = String.concat "/" [root_dir;rel] in
+    let fqp_out = String.concat "." [fqp2;"out"] in
       try 
-        Unix.unlink fqp1;
-        Unix.unlink fqp2
+        Unix.unlink fqp_in;
+        Unix.unlink fqp_out
       with _ ->
         fprintf logfd "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp1 (this#get_slice_name ());flush logfd
 
