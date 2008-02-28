@@ -53,6 +53,7 @@ mkdir -p $RPM_BUILD_ROOT/vsys
 cp factory/* $RPM_BUILD_ROOT/vsys
 cp vsys $RPM_BUILD_ROOT/usr/bin
 cp vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
+cp vsys.conf $RPM_BUILD_ROOT/etc
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -61,6 +62,7 @@ rm -rf $RPM_BUILD_ROOT
 /usr/bin/vsys
 /etc/init.d/vsys
 /vsys/*
+/etc/vsys.conf
 
 %post
 chkconfig --add vsys
