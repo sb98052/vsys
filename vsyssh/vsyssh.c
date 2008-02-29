@@ -58,11 +58,12 @@ int main(int argc, char **argv, char **envp)
 
 			while (1) {
 				int ret;
-				printf("vsys>");
+				printf("vsys>");fflush(stdout);
 				ret = select(vfd0+1, &set, NULL, NULL, &tv);
 				if (FD_ISSET(0,&set)) {
 					char lineread[2048];
 					int ret;
+					printf("Here\n");
 					ret=read(0,lineread,2048);
 					write(vfd1,lineread,ret);
 					FD_CLR(0,&set);
@@ -70,6 +71,7 @@ int main(int argc, char **argv, char **envp)
 				else if (FD_ISSET(vfd0,&set)) {
 					char lineread[2048];
 					int ret;
+					printf("Here2\n");
 					ret=read(vfd0,lineread,2048);
 					write(1,lineread,ret);
 					FD_CLR(vfd0,&set);
