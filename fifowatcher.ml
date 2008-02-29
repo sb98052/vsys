@@ -70,7 +70,6 @@ and reopenentry_int fdin fifoin fifoout =
   @param outdescriptor Name of output pipe, out descriptor
   *)
 and receive_fifo_event eventdescriptor outdescriptor =
-  printf "received fifo event\n";flush Pervasives.stdout;
   let (evfname,evfd) = eventdescriptor in
   let (fname_other,fd_other) = outdescriptor in
   (* Open the output pipe, or use stdout instead *)
@@ -87,7 +86,6 @@ and receive_fifo_event eventdescriptor outdescriptor =
    If not, register it and start a new session.*)
   let pipe = try Hashtbl.find open_fds evfd with
     | Not_found ->
-        printf "fd not found!\n";flush Pervasives.stdout;
         (* Ok, need to launch script *)
         let execpath,slice_name = Hashtbl.find fdmap evfd in
         let (script_infd,pout) = Unix.pipe () in
