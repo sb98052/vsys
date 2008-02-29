@@ -50,7 +50,6 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
             done
       | _ -> fprintf logfd "Bug! Process fd received in the channel handler\n";flush logfd;raise Bug
 
-
 let rec openentry_int fifoin fifoout (abspath:string*string) =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
@@ -71,6 +70,7 @@ and reopenentry_int fdin fifoin fifoout =
   @param outdescriptor Name of output pipe, out descriptor
   *)
 and receive_fifo_event eventdescriptor outdescriptor =
+  printf "received fifo event\n";flush Pervasives.stdout;
   let (evfname,evfd) = eventdescriptor in
   let (fname_other,fd_other) = outdescriptor in
   (* Open the output pipe, or use stdout instead *)
@@ -87,11 +87,13 @@ and receive_fifo_event eventdescriptor outdescriptor =
    If not, register it and start a new session.*)
   let pipe = try Hashtbl.find open_fds evfd with
     | Not_found ->
+        printf "fd not found!\n";flush Pervasives.stdout;
         (* Ok, need to launch script *)
         let execpath,slice_name = Hashtbl.find fdmap evfd in
         let (script_infd,pout) = Unix.pipe () in
         let (pin,script_outfd) = Unix.pipe () in
           set_nonblock script_infd;
+          ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
           let rpid = try Some(create_process execpath [|execpath;slice_name|] pin pout pout) with e -> fprintf logfd "Error executing service: %s\n" execpath;flush logfd;None
           in
             match rpid with
@@ -139,8 +141,11 @@ and receive_fifo_event eventdescriptor outdescriptor =
                     cont:=false
                 |Sys_blocked_io ->fprintf logfd "Sysblockedio\n";flush logfd;
                                   cont:=false
-                | _ ->fprintf logfd "Bug: unhandled exception\n";flush logfd;raise Bug
-            done
+                | Unix_error(_,s1,s2) -> fprintf logfd "Unix error %s - %s\n" s1 s2;flush logfd;cont:=false
+                (*| _ ->fprintf logfd "Bug: unhandled exception\n";flush
+                 * logfd;raise Bug*)
+            done;
+            ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld])
       | BrokenPipe -> ()
       | Fifo(_) -> fprintf logfd "BUG! received process event from fifo\n";raise Bug
 
