@@ -39,8 +39,6 @@ int main(int argc, char **argv, char **envp)
 		strcpy(outf,argv[1]);
 		strcat(inf,".in");
 		strcat(outf,".out");
-		tv.tv_sec = 100;
-		tv.tv_usec = 0;
 
 		vfd1 = open(inf,O_WRONLY|O_NONBLOCK);
 		vfd0 = open(outf,O_RDONLY|O_NONBLOCK);
@@ -61,7 +59,7 @@ int main(int argc, char **argv, char **envp)
 				printf("vsys>");fflush(stdout);
 				FD_SET(0, &set);
 				FD_SET(vfd0, &set);
-				ret = select(vfd0+1, &set, NULL, NULL, &tv);
+				ret = select(vfd0+1, &set, NULL, NULL, NULL);
 				if (FD_ISSET(0,&set)) {
 					char lineread[2048];
 					int ret;
