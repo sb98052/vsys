@@ -5,14 +5,17 @@ open Unix
 open Globals
 open Dirwatcher
 open Printf
+open Splice
 
 (** A connected process, FIFO *)
-type channel_pipe = Process of out_channel | Fifo of out_channel | BrokenPipe
-(** Signed file descriptors. Usually, we'll make sure that they're not
-  mistreated *)
+type channel_pipe = Process of Unix.file_descr | Fifo of Unix.file_descr | BrokenPipe
+
+(** Signed file descriptors. *)
 type signed_fd = Infd of Unix.file_descr | Outfd of Unix.file_descr | Eventfd of Unix.file_descr
 
+(** XXX This will get deprecated when we switch to inotify *)                                                                                  
 let fdmap: (Unix.file_descr,string*string) Hashtbl.t = Hashtbl.create 1024
+
 (** Maps pids to slice connections. Needed to clean up fds when a script dies
   with EPIPE *)
 let pidmap: (int,signed_fd list) Hashtbl.t = Hashtbl.create 1024
@@ -32,22 +35,16 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
         fprintf logfd "Fifo fd disappeared\n";flush logfd;raise Bug
   in
     match (cp) with 
-      | Fifo(fifo_outchan) ->
-          let process_inchan = in_channel_of_descr ifd in
-          let cont = ref true in
-            while (!cont) do
-              try 
-                let curline = input_line process_inchan in
-                  fprintf fifo_outchan "%s\n" curline;flush fifo_outchan
-              with 
-                | End_of_file|Sys_blocked_io|Unix_error(EPIPE,_,_)|Unix_error(EBADF,_,_) ->
-                    begin
-                      cont:=false
-                    end
-                | Unix_error(_,s1,s2) -> fprintf logfd "Unix error %s - %s\n" s1 s2;flush logfd;cont:=false
-                | Sys_error(s) -> (* We get this error if the EPIPE comes before the EOF marker*) cont:=false
-                | e -> fprintf logfd "Error - received unexpected event from file system !!!\n";raise e
-            done
+      | Fifo(fifo_outfd) ->
+          begin
+          try
+            printf "Received process event\n";flush Pervasives.stdout;
+            let tr0,tr1 = Unix.pipe () in
+                ignore(splice ifd tr1 4096);
+                ignore(splice tr0 fifo_outfd 4096)
+          with 
+              Failure(s)->fprintf logfd "Transfer failure: %s\n" s;flush logfd
+          end
       | _ -> fprintf logfd "Bug! Process fd received in the channel handler\n";flush logfd;raise Bug
 
 let rec openentry_int fifoin fifoout (abspath:string*string) =
@@ -64,6 +61,7 @@ and reopenentry_int fdin fifoin fifoout =
       Hashtbl.find fdmap fdin with _ -> fprintf logfd "Bug: Phantom pipe\n";flush logfd;raise Bug
     in
       openentry_int fifoin fifoout abspath
+
 (** receive an event from a fifo and connect to the corresponding service, or to
   create it if it doesn't exit 
   @param eventdescriptor Name of input pipe,in descriptor
@@ -102,48 +100,33 @@ and receive_fifo_event eventdescriptor outdescriptor =
                   Hashtbl.add pidmap pid [Infd(script_infd);Outfd(script_outfd);Eventfd(evfd)];
 
                   (* Connect pipe to running script *)
-                  Hashtbl.add open_fds evfd (Process(out_channel_of_descr script_outfd));
+                  Hashtbl.add open_fds evfd (Process(script_outfd));
 
                   (* Connect the running script to the pipe *)
-                  Hashtbl.add open_fds script_infd (Fifo(out_channel_of_descr outfd));
+                  Hashtbl.add open_fds script_infd (Fifo(outfd));
 
                   (* Activate running script *)
                   Fdwatcher.add_fd (None,script_infd) (None,script_infd) receive_process_event;
 
-                  (Process(out_channel_of_descr script_outfd))
+                  (Process(script_outfd))
   in
   (* We have the connection to the process - because it was open, or because it
    just got established *)
-  let inchan_fd = in_channel_of_descr evfd in
     match (pipe) with
-      | Process(out_channel) -> 
-          let cont = ref true in
-            while (!cont) do
-              try 
-                fprintf logfd "Reading...\n";flush logfd;
-                let curline = input_line inchan_fd in
-                  fprintf out_channel "%s\n" curline;flush out_channel 
-              with 
-                |End_of_file->
-                    (
-                      match (evfname,fname_other) with
-                        | Some(str1),Some(str2)->
-                            fprintf logfd "Reopening entry\n";flush logfd;
-                            reopenentry_int evfd str1 str2
-                        | Some(str1),None ->
-                            fprintf logfd "Bug, nameless pipe\n";flush logfd;raise Bug
-                        | None,_ ->
-                            fprintf logfd "Race condition -> user deleted file before closing it. Clever ploy, but won't work.\n";
-                            flush logfd
-                    );
-                    cont:=false
-                |Sys_blocked_io ->fprintf logfd "Sysblockedio\n";flush logfd;
-                                  cont:=false
-                | Unix_error(_,s1,s2) -> fprintf logfd "Unix error %s - %s\n" s1 s2;flush logfd;cont:=false
-                (*| _ ->fprintf logfd "Bug: unhandled exception\n";flush
-                 * logfd;raise Bug*)
-            done;
+      | Process(fifo_outfd) -> 
+          begin
+          try
+            printf "Received fifo event\n";flush Pervasives.stdout;
+            let tr0,tr1 = Unix.pipe() in
+          ignore(splice evfd tr1 4096);
+          ignore(splice tr0 fifo_outfd 4096)
+          with Failure(str) ->
+            begin
+            fprintf logfd "Error connecting user to service: %s\n" str;
+            flush logfd
+            end;
             ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld])
+          end
       | BrokenPipe -> ()
       | Fifo(_) -> fprintf logfd "BUG! received process event from fifo\n";raise Bug
 
