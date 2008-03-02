@@ -22,8 +22,7 @@ CAMLprim value stub_splice(value fd_in, value fd_out, value len)
         CAMLparam3(fd_in, fd_out, len);
 	long ret;
         ret = syscall(SPLICE_SYSCALL, Int_val(fd_in), NULL, Int_val(fd_out),NULL, Int_val(len), SPLICE_F_NONBLOCK);
-        if (ret == -1) {
-		printf ("Splice error: %s\n", strerror(errno));
+        if (ret == -1 && errno!=EAGAIN) {
                 caml_failwith("Splice system call returned -1");
 	}
         CAMLreturn(Val_int(ret));
@@ -34,9 +33,8 @@ CAMLprim value stub_tee(value fd_in, value fd_out, value len)
         CAMLparam3(fd_in, fd_out, len);
 	long ret;
         ret = syscall(TEE_SYSCALL,Int_val(fd_in), Int_val(fd_out), Int_val(len), SPLICE_F_NONBLOCK);
-        if (ret == -1) {
-		printf ("Sendfile error: %s\n", strerror(errno));
-                caml_failwith("Splice system call returned -1");
+        if (ret == -1 && errno!=EAGAIN) {
+                caml_failwith(strerror(errno));
 	}
         CAMLreturn(Val_int(ret));
 }

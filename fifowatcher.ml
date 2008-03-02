@@ -22,7 +22,6 @@ let pidmap: (int,signed_fd list) Hashtbl.t = Hashtbl.create 1024
 let backend_prefix = ref ""
 let open_fds: (Unix.file_descr,channel_pipe) Hashtbl.t = Hashtbl.create 1024
 
-
 (** Receive an event from a running script. This event must be relayed to the
   slice that invoked it.
 
@@ -37,13 +36,19 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
     match (cp) with 
       | Fifo(fifo_outfd) ->
           begin
-          try
-            printf "Received process event\n";flush Pervasives.stdout;
-            let tr0,tr1 = Unix.pipe () in
-                ignore(splice ifd tr1 4096);
-                ignore(splice tr0 fifo_outfd 4096)
-          with 
-              Failure(s)->fprintf logfd "Transfer failure: %s\n" s;flush logfd
+            try
+              printf "Received process event\n";flush Pervasives.stdout;
+              (* transferred = 4096 => there were at least 4096 bytes in the
+               * stream, so we should try again.
+               * transferred < 4096 => EAGAIN => either this is all the data we
+               * have (move on)
+               * OR XXX the receiver is blocking (supposedly this can't happen) *)
+              let transferred = ref 4096 in
+                while (!transferred == 4096) do 
+                  transferred:=tee ifd fifo_outfd 4096
+                done;
+            with 
+                Failure(s)->fprintf logfd "Transfer failure: %s\n" s;flush logfd
           end
       | _ -> fprintf logfd "Bug! Process fd received in the channel handler\n";flush logfd;raise Bug
 
@@ -110,22 +115,27 @@ and receive_fifo_event eventdescriptor outdescriptor =
 
                   (Process(script_outfd))
   in
-  (* We have the connection to the process - because it was open, or because it
-   just got established *)
+    (* We have the connection to the process - because it was open, or because it
+     just got established *)
     match (pipe) with
       | Process(fifo_outfd) -> 
           begin
-          try
-            printf "Received fifo event\n";flush Pervasives.stdout;
-            let tr0,tr1 = Unix.pipe() in
-          ignore(splice evfd tr1 4096);
-          ignore(splice tr0 fifo_outfd 4096)
-          with Failure(str) ->
-            begin
-            fprintf logfd "Error connecting user to service: %s\n" str;
-            flush logfd
-            end;
-            ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld])
+            try
+              let transferred = ref 4096 in
+                while (!transferred == 4096) do
+                  begin
+                  transferred:=tee evfd fifo_outfd 4096;
+                                 printf "Transferred: %d\n" !transferred;flush Pervasives.stdout
+                  end
+                done;
+            with Failure(str) ->
+              begin
+                fprintf logfd "Error connecting user to service: %s\n" str;
+                flush logfd
+              end;
+              ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
+                                 printf "Out of the loop\n";flush Pervasives.stdout
+
           end
       | BrokenPipe -> ()
       | Fifo(_) -> fprintf logfd "BUG! received process event from fifo\n";raise Bug
@@ -144,10 +154,10 @@ let mkentry fqp abspath perm uname =
          Unix.mkfifo infname 0o666;
          Unix.mkfifo outfname 0o666;
          ( (* Make the user the owner of the pipes in a non-chroot environment *)
-         if (!Globals.nochroot) then
-           let pwentry = Unix.getpwnam uname in
-             Unix.chown infname pwentry.pw_uid pwentry.pw_gid; 
-             Unix.chown outfname pwentry.pw_uid pwentry.pw_gid
+           if (!Globals.nochroot) then
+             let pwentry = Unix.getpwnam uname in
+               Unix.chown infname pwentry.pw_uid pwentry.pw_gid; 
+               Unix.chown outfname pwentry.pw_uid pwentry.pw_gid
          );
          Success
      with 
