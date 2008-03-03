@@ -24,7 +24,7 @@ object(this)
         let res = Directfifowatcher.mkentry fqp abspath realperm slice_name in
           match res with 
             | Success ->
-                Directfifowatcher.openentry fqp (abspath,slice_name)
+                Directfifowatcher.openentry root_dir fqp (abspath,slice_name)
             | _ -> ()
 
   (** A new directory was created at the backend, make a corresponding directory
@@ -77,5 +77,21 @@ object(this)
           fprintf logfd "Hm. %s disappeared or not empty. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ());flush logfd
 
   initializer 
-    Directfifowatcher.add_dir_watch root_dir
+        try 
+          let s = Unix.stat root_dir in
+            if (s.st_kind<>S_DIR) then
+              begin
+                Unix.unlink root_dir;
+                Unix.mkdir root_dir 0o700
+              end
+            else if (s.st_perm <> 0o700) then
+              begin
+                Unix.rmdir root_dir;
+                Unix.mkdir root_dir 0o700
+              end;
+        with Unix.Unix_error(_,_,_) ->
+          try 
+          Unix.mkdir root_dir 0o700;
+          with _ -> ();
+        Directfifowatcher.add_dir_watch root_dir
 end

@@ -43,6 +43,8 @@ let _ =
           end;
 
             Dirwatcher.initialize ();
+            Directfifowatcher.initialize ();
+
             if (!Globals.conffile <> "") then
               begin
               let frontends = Conffile.read_frontends !Globals.conffile in

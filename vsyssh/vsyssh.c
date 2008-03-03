@@ -66,6 +66,8 @@ int main(int argc, char **argv, char **envp)
 					char lineread[2048];
 					int ret;
 					ret=read(0,lineread,2048);
+					lineread[ret]='\0';
+					printf ("writing %s\n",lineread);
 					write(vfd1,lineread,ret);
 					FD_CLR(0,&set);
 				} if (FD_ISSET(vfd0,&set)) {
