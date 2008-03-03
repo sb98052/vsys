@@ -69,7 +69,6 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                        let (dirname,handler,oneshot) = 
                          try Hashtbl.find wdmap wd with Not_found->("",None,false)
                        in
-                         printf "Received event: %s " dirname;
                          List.iter (fun l->printf "%s " (string_of_event l)) evlist;
                          printf "\n";flush Pervasives.stdout;
                          if (oneshot) then Hashtbl.remove wdmap wd;

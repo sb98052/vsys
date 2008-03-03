@@ -122,7 +122,6 @@ let sigchld_handle s =
   let pid,_=Unix.waitpid [Unix.WNOHANG] 0 in
     try
       let fqp_in = Hashtbl.find pidmap pid in
-        printf "Reopening fifo\n";flush Pervasives.stdout;
         reopenentry fqp_in
     with _ -> ()
 
