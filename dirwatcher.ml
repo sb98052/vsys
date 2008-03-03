@@ -9,6 +9,8 @@ open Globals
  * leaks - fix implementation of rmdir accordingly
  *)
 
+type 'a handlertype = Nohandler | Activehandler of 'a | Maskedhandler of 'a
+
 let wdmap = Hashtbl.create 1024
 
 let fd = Inotify.init ()
@@ -22,9 +24,27 @@ let handle_dir_event dirname evlist str =
         flush logfd
 
 let add_watch dir events handler =
-  printf "Adding watch for %s\n" dir;flush Pervasives.stdout;
   let wd = Inotify.add_watch fd dir events in
-      Hashtbl.add wdmap wd (dir,handler)
+      Hashtbl.add wdmap wd (dir,Activehandler(handler))
+
+let mask_events wd =
+  let (dirname,handler) = try Hashtbl.find wdmap wd with Not_found->("",Nohandler)
+  in
+    match handler with
+      | Activehandler(func)->
+          Hashtbl.replace wdmap wd (dirname,Maskedhandler(func))
+      | _ ->
+          ()
+
+let unmask_events wd =
+  let (dirname,handler) = try Hashtbl.find wdmap wd with Not_found->("",Nohandler)
+  in
+    match handler with
+      | Maskedhandler(func)->
+          Hashtbl.replace wdmap wd (dirname,Activehandler(func))
+      | _ ->
+          ()
+
 
         (* XXX
 let del_watch dir =
@@ -51,12 +71,13 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                   | (wd,evlist,_,Some(str)) ->
                       let purestr = asciiz(str) in
                       let (dirname,handler) = 
-                        try Hashtbl.find wdmap wd with Not_found->fprintf logfd "Unknown watch descriptor\n";raise Not_found
+                        try Hashtbl.find wdmap wd with Not_found->("",Nohandler)
                       in
                         (
                         match handler with
-                          | None->handle_dir_event dirname evlist purestr
-                          | Some(handler)->handler dirname evlist purestr
+                          | Nohandler->fprintf logfd "Unhandled watch descriptor\n";flush logfd
+                          | Activehandler(handler)->handler wd dirname evlist purestr
+                          | Maskedhandler(_)->()
                         )
                   | _ -> ()) 
           evs

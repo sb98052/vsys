@@ -1,4 +1,9 @@
-(** fifowatcher.ml: Routines to handle non-persistent scripts *)
+(** directfifowatcher.ml: Routines to handle non-persistent scripts *)
+(* Semantics:
+ *      - The 'out' descriptor must be opened first
+ *      - As soon as the backend script dies, the connection to the entry is
+ *      closed.
+ *)
 
 open Inotify
 open Unix
@@ -15,21 +20,19 @@ let rec list_check lst elt =
     | [] -> false
     | car::cdr -> if (car==elt) then true else list_check cdr elt
 
-
-
-
 (* vsys is activated when a client opens an in file *)
-let connect_file fqp_in =
+let connect_file mask_events fqp_out =
   (* Do we care about this file? *)
   let entry_info = try
-    Hashtbl.find direct_fifo_table fqp_in with _ -> fprintf logfd "[Alert] Access via unauthorized vsys entry: %s\n" fqp_in;flush logfd;None in
+    Hashtbl.find direct_fifo_table fqp_out with _ -> None in
     match entry_info with
       | Some(execpath,slice_name) ->
           fprintf logfd "Executing %s for slice %s\n" execpath slice_name;flush logfd;
           begin
-            let len = String.length fqp_in in
-            let fqp = String.sub fqp_in 0 (len-3) in
-            let fqp_out = String.concat "." [fqp;"out"] in
+            let len = String.length fqp_out in
+            let fqp = String.sub fqp_out 0 (len-4) in
+              mask_events true;
+            let fqp_in = String.concat "." [fqp;"in"] in
             let fifo_fdin =
               try openfile fqp_in [O_RDONLY;O_NONBLOCK] 0o777 with
                   e->fprintf logfd "Error opening and connecting FIFO: %s\n" fqp_in;flush logfd;raise e
@@ -38,7 +41,10 @@ let connect_file fqp_in =
               try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
                   _->fprintf logfd "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;flush logfd;stdout
             in
-              try ignore(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> fprintf logfd "Error executing service: %s\n" execpath;flush logfd
+              try ignore(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout); with e -> begin fprintf logfd "Error executing service: %s\n" execpath;flush logfd end;
+                close fifo_fdin;
+                close fifo_fdout;
+                mask_events false;
           end
       | None -> ()
 
@@ -67,23 +73,25 @@ let mkentry fqp abspath perm uname =
 
 (** Open fifos for a session. SHOULD NOt shutdown vsys if the fifos don't exist *)
 let openentry fqp backend_spec =
-  let fqp_in = String.concat "." [fqp;"in"] in
+  let fqp_in = String.concat "." [fqp;"out"] in
     Hashtbl.replace direct_fifo_table fqp_in (Some(backend_spec))
 
 (** Close fifos that just got removed *)
 let closeentry fqp =
-  let fqp_in = String.concat "." [fqp;"in"] in
+  let fqp_in = String.concat "." [fqp;"out"] in
     Hashtbl.remove direct_fifo_table fqp_in
 
-let direct_fifo_handler dirname evlist fname =
-  printf "Received event %s %s\n" dirname fname;flush Pervasives.stdout;
+let direct_fifo_handler wd dirname evlist fname =
+  let mask_events flag =
+    if (flag) then Dirwatcher.mask_events wd else Dirwatcher.unmask_events wd
+  in
   let is_event = list_check evlist in
     if (is_event Open) then 
-      let fqp_in = String.concat "/" [dirname;fname] in
-        connect_file fqp_in
+      let fqp_out = String.concat "/" [dirname;fname] in
+        connect_file mask_events fqp_out
 
 let add_dir_watch fqp =
-  Dirwatcher.add_watch fqp [S_Open] (Some(direct_fifo_handler))
+  Dirwatcher.add_watch fqp [S_Open] direct_fifo_handler
 
 let del_dir_watch fqp =
   (* XXX Dirwatcher.del_watch fqp *)

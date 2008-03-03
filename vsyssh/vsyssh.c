@@ -40,11 +40,13 @@ int main(int argc, char **argv, char **envp)
 		strcat(inf,".in");
 		strcat(outf,".out");
 
-		vfd1 = open(inf,O_WRONLY|O_NONBLOCK);
 		vfd0 = open(outf,O_RDONLY|O_NONBLOCK);
+		printf("Out file: %d\n",vfd0);
+		vfd1 = open(inf,O_WRONLY);
+		printf("In file: %d\n",vfd1);
 
 		if (vfd0==-1 || vfd1 == -1) {
-			printf("Error opening vsys entry %s\n", argv[1]);
+			printf("Error opening vsys entry %s (%s)\n", argv[1],strerror(errno));
 			exit(1);
 		}
 

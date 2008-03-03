@@ -60,7 +60,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
            (fun frontend->
               try begin 
                 frontend#mkdir (mk_rel_path fqp) (s.st_perm);
-                Dirwatcher.add_watch fqp [S_Create;S_Delete] (Some(func)) 
+                Dirwatcher.add_watch fqp [S_Create;S_Delete] func 
               end
               with _ ->
                 fprintf logfd "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;flush logfd;
@@ -98,7 +98,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        @param evlist Description of what happened
        @param fname Name of the file that the event applies to
      *)
-     method handle_dir_event dirname evlist fname = 
+     method handle_dir_event _ dirname evlist fname = 
        let fqp = String.concat "/" [dirname;fname] in
          if ((Str.string_match file_regexp fname 0) && not (Str.string_match acl_file_regexp fname 0)) then  
            begin
@@ -179,6 +179,6 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
      in
        begin
          build_initial_tree dir_root;
-         Dirwatcher.add_watch dir_root [S_Create;S_Delete] (Some(this#handle_dir_event));
+         Dirwatcher.add_watch dir_root [S_Create;S_Delete] (this#handle_dir_event);
        end
    end
