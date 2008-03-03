@@ -22,9 +22,16 @@ let handle_dir_event dirname evlist str =
         flush logfd
 
 let add_watch dir events handler =
-  fprintf logfd "Adding watch for %s\n" dir;flush logfd;
+  printf "Adding watch for %s\n" dir;flush Pervasives.stdout;
   let wd = Inotify.add_watch fd dir events in
       Hashtbl.add wdmap wd (dir,handler)
+
+        (* XXX
+let del_watch dir =
+  fprintf logfd "Removing watch for %s\n" dir;flush logfd;
+  let wd = Inotify.rm_watch fd dir in
+      Hashtbl.remove wdmap wd 
+         *)
 
 let asciiz s =
   let rec findfirstnul str idx len =

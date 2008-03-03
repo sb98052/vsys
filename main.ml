@@ -4,7 +4,6 @@ open Printf
 open Inotify
 open Backend
 open Frontend
-open Fifowatcher
 open Conffile
 
 let input_file_list = ref []
@@ -44,7 +43,6 @@ let _ =
           end;
 
             Dirwatcher.initialize ();
-            Fifowatcher.initialize ();
             if (!Globals.conffile <> "") then
               begin
               let frontends = Conffile.read_frontends !Globals.conffile in

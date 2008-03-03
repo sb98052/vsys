@@ -1,12 +1,22 @@
+backend.cmo: inotify.cmi globals.cmo frontend.cmo fifowatcher.cmo \
+    dirwatcher.cmo 
+backend.cmx: inotify.cmi globals.cmx frontend.cmx fifowatcher.cmx \
+    dirwatcher.cmx 
+conffile.cmo: globals.cmo 
+conffile.cmx: globals.cmx 
+directfifowatcher.cmo: splice.cmo inotify.cmi globals.cmo dirwatcher.cmo 
+directfifowatcher.cmx: splice.cmx inotify.cmi globals.cmx dirwatcher.cmx 
 dirwatcher.cmo: inotify.cmi globals.cmo fdwatcher.cmo 
 dirwatcher.cmx: inotify.cmi globals.cmx fdwatcher.cmx 
 fdwatcher.cmo: globals.cmo 
 fdwatcher.cmx: globals.cmx 
-fifowatcher.cmo: inotify.cmi globals.cmo fdwatcher.cmo dirwatcher.cmo 
-fifowatcher.cmx: inotify.cmi globals.cmx fdwatcher.cmx dirwatcher.cmx 
-frontend.cmo: globals.cmo fifowatcher.cmo 
-frontend.cmx: globals.cmx fifowatcher.cmx 
+fifowatcher.cmo: splice.cmo inotify.cmi globals.cmo fdwatcher.cmo \
+    dirwatcher.cmo 
+fifowatcher.cmx: splice.cmx inotify.cmi globals.cmx fdwatcher.cmx \
+    dirwatcher.cmx 
+frontend.cmo: globals.cmo directfifowatcher.cmo 
+frontend.cmx: globals.cmx directfifowatcher.cmx 
 main.cmo: inotify.cmi globals.cmo frontend.cmo fifowatcher.cmo fdwatcher.cmo \
-    dirwatcher.cmo backend.cmo 
+    dirwatcher.cmo conffile.cmo backend.cmo 
 main.cmx: inotify.cmi globals.cmx frontend.cmx fifowatcher.cmx fdwatcher.cmx \
-    dirwatcher.cmx backend.cmx 
+    dirwatcher.cmx conffile.cmx backend.cmx 
