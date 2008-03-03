@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,6 +23,10 @@
 #include <stdarg.h>
 #include <dirent.h>
 
+void pipe_handler (int sig) {
+	printf("SIGPIPE");
+}
+
 int main(int argc, char **argv, char **envp)
 {
 	if (argc<2) {
@@ -33,6 +38,7 @@ int main(int argc, char **argv, char **envp)
 		char *inf,*outf;
 		struct timeval tv;
 
+		signal(SIGPIPE,pipe_handler);
 		inf=(char *)malloc(strlen(argv[1])+3);
 		outf=(char *)malloc(strlen(argv[1])+4);
 		strcpy(inf,argv[1]);
@@ -56,7 +62,8 @@ int main(int argc, char **argv, char **envp)
 			FD_SET(0, &set);
 			FD_SET(vfd0, &set);
 
-			while (1) {
+			while (1)
+			 {
 				int ret;
 				printf("vsys>");fflush(stdout);
 				FD_SET(0, &set);
