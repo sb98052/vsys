@@ -84,7 +84,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
              with _ -> None
            in
              match next_item with
-               | None -> cur_filter
+               | None -> close_in acl_file;cur_filter
                | Some(item) -> 
                    Hashtbl.add cur_filter item true;
                    read_acl cur_filter
