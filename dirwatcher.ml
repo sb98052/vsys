@@ -28,11 +28,12 @@ let handle_dir_event dirname evlist str =
 
 let add_watch dir events handler =
   let evcheck = list_check events in
-  let oneshot = if (evcheck S_Oneshot) then true else false
-  in
   let wd = Inotify.add_watch fd dir events in
     Hashtbl.add masks dir (wd,handler);
-    Hashtbl.add wdmap wd (dir,Some(handler),oneshot)
+    Hashtbl.add wdmap wd (dir,Some(handler))
+
+      (* Ignore the possibility that the whole directory can disappear and come
+       * back while it is masked *)
 
 let mask_watch dir =
   try 
@@ -43,7 +44,7 @@ let mask_watch dir =
     ()
 
 let unmask_watch dir events =
-  let _,handler = Hashtbl.find masks dir in
+  let _,handler = try Hashtbl.find masks dir with Not_found->fprintf logfd "unmask called without mask: %s\n" dir;flush logfd;raise Not_found in
     try 
       Hashtbl.remove masks dir;
       add_watch dir events handler
@@ -65,16 +66,15 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
     List.iter (fun x->
                  match x with
                    | (wd,evlist,_,Some(str)) ->
-                       let purestr = asciiz(str) in
-                       let (dirname,handler,oneshot) = 
-                         try Hashtbl.find wdmap wd with Not_found->("",None,false)
-                       in
-                         if (oneshot) then Hashtbl.remove wdmap wd;
-                         (
-                           match handler with
-                             | None->fprintf logfd "Unhandled watch descriptor\n";flush logfd
-                             | Some(handler)->handler wd dirname evlist purestr
-                         )
+                       begin
+                               let purestr = asciiz(str) in
+                               let (dirname,handler) = 
+                                 try Hashtbl.find wdmap wd with Not_found->("",None)
+                               in
+                                   match handler with
+                                     | None->fprintf logfd "Unhandled watch descriptor\n";flush logfd
+                                     | Some(handler)->handler wd dirname evlist purestr
+                       end
                    | _ -> ()) 
       evs
 

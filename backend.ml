@@ -93,6 +93,8 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        with _ ->
          None
 
+     method is_acl fname = Str.string_match acl_file_regexp fname 0
+
      (** Gets called every time there's an inotify event at the backend 
        @param dirname Name of the backend directory
        @param evlist Description of what happened
@@ -152,7 +154,9 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        let cont = ref true in
          while (!cont) do
            try 
-             let curfile = readdir dir_handle  in
+             let curfile = readdir dir_handle in
+               if (not (this#is_acl curfile)) then
+                 begin
              let fqp = String.concat "/" [dir;curfile] in
              let acl_fqp = String.concat "." [fqp;"acl"] in
              let acl_filter = this#make_filter acl_fqp in
@@ -161,7 +165,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                  | None -> frontend_lst 
                  | Some(filter) -> List.filter (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) frontend_lst 
              in
-               if (Str.string_match file_regexp curfile 0 && not (Str.string_match acl_file_regexp curfile 0)) then
+               if (Str.string_match file_regexp curfile 0) then
                  let s = Unix.stat fqp in
                    begin
                      match s.st_kind with
@@ -173,8 +177,9 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                        | _ ->
                            fprintf logfd "Don't know what to do with %s\n" curfile;flush logfd
                    end
-           with 
-               _->cont:=false;()
+                 end
+           with _
+               ->cont:=false;()
          done 
      in
        begin

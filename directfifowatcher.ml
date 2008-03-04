@@ -76,6 +76,7 @@ let connect_file fqp_in =
             (
             clear_nonblock fifo_fdin;
             let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
+              if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
               match pid with 
                 | Some(pid) ->Hashtbl.add pidmap pid fqp_in
                 | None ->fprintf logfd "Error executing service: %s\n" execpath;flush logfd;reopenentry fqp_in

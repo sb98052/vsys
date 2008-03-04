@@ -51,7 +51,7 @@ let _ =
                 input_file_list:=List.concat [!input_file_list;frontends]
               end;
 
-            let felst = List.map (fun lst->let (x,y)=lst in printf "Slice %s (%s)\n" x y;flush logfd;new frontendHandler lst) !input_file_list in
+            let felst = List.map (fun lst->let (x,y)=lst in fprintf logfd "Slice %s (%s)\n" x y;flush logfd;new frontendHandler lst) !input_file_list in
                 let _ = new backendHandler !Globals.backend felst in
                  Fdwatcher.start_watch ()
     end
