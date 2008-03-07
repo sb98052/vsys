@@ -21,9 +21,8 @@ open Splice
 
 let close_if_open fd = (try (ignore(close fd);) with _ -> ())
 
-
 let direct_fifo_table: (string,(string*string*string*Unix.file_descr) option) Hashtbl.t = Hashtbl.create 1024
-let pidmap: (int,string) Hashtbl.t = Hashtbl.create 1024
+let pidmap: (int,string*Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
 
 let rec list_check lst elt =
   match lst with
@@ -76,9 +75,8 @@ let connect_file fqp_in =
             (
             clear_nonblock fifo_fdin;
             let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
-              if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
               match pid with 
-                | Some(pid) ->Hashtbl.add pidmap pid fqp_in
+                | Some(pid) ->Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
                 | None ->fprintf logfd "Error executing service: %s\n" execpath;flush logfd;reopenentry fqp_in
             );
             ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
@@ -122,8 +120,12 @@ let closeentry fqp =
 let sigchld_handle s =
   let pid,_=Unix.waitpid [Unix.WNOHANG] 0 in
     try
-      let fqp_in = Hashtbl.find pidmap pid in
-        reopenentry fqp_in
+      let fqp_in,fd_out = Hashtbl.find pidmap pid in
+        begin
+        reopenentry fqp_in;
+        if (fd_out <> stdout) then close_if_open fd_out
+        end
+
     with _ -> ()
 
 let rec add_dir_watch fqp =
