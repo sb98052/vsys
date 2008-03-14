@@ -28,7 +28,7 @@ print "(success)\n";
 # Subtest #2 
 
 print "Multiple-connection test...\t";
-system("su -c ./conctest pl_netflow -");
+system("su -c ./vsys_conctest pl_netflow -");
 ($? && die ("Multiple-connection test failed\n"));
 
 
