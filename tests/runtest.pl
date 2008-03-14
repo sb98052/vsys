@@ -15,6 +15,8 @@ open FIL,">/vsys/test" || die ("Could not create test entry.");
 print FIL $vsys_entry;
 close $vsys_entry;
 
+chmod 0755,"/vsys/test";
+
 # Check if it has shown up
 
 (-f "/vservers/pl_netflow/test.in") || die ("in file didn't show up in the slice");
