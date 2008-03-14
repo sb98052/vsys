@@ -1,0 +1,14 @@
+Description:
+
+Subtest #1 -
+
+Create a new vsys entry, expect it to show up in a slice
+
+Subtest #2 -
+
+Run subtest #2 100 times and expect each execution to run.
+
+Subtest #3 -
+
+Clean up the entry and expect it to disappear from within the slice.
+
