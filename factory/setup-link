@@ -4,10 +4,11 @@ IP=/sbin/ip
 
 SLICE=$1
 SLICEID=`id -u $SLICE`
-read LINKNUM
-LINK=${SLICEID}$LINKNUM
+read LABEL
 read REMOTE
 read KEY
+
+LINK=${LABEL}k$KEY
 
 modprobe ip_gre
 modprobe etun
@@ -18,7 +19,7 @@ $IP tunnel add $EGRE  mode gre/eth remote $REMOTE key $KEY
 $IP link set $EGRE up
 
 ### Setup etun
-ETUN0=veth$LINK
+ETUN0=v$LINK
 ETUN1=etun$LINK
 echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
 ifconfig $ETUN0 up
