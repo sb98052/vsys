@@ -1,0 +1,46 @@
+#!/bin/sh +x
+
+IP=/sbin/ip
+
+SLICE=$1
+SLICEID=`id -u $SLICE`
+read LINKNUM
+LINK=${SLICEID}$LINKNUM
+read REMOTE
+read KEY
+
+modprobe ip_gre
+modprobe etun
+
+### Setup EGRE tunnel
+EGRE=egre$LINK
+$IP tunnel add $EGRE  mode gre/eth remote $REMOTE key $KEY
+$IP link set $EGRE up
+
+### Setup etun
+ETUN0=veth$LINK
+ETUN1=etun$LINK
+echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
+ifconfig $ETUN0 up
+ifconfig $ETUN1 up
+
+### Setup bridge
+BRIDGE=br$LINK
+brctl addbr $BRIDGE
+brctl addif $BRIDGE $EGRE 
+brctl addif $BRIDGE $ETUN1
+ifconfig $BRIDGE up
+
+### Create "grab link" script
+GRAB=/vsys/grab-$ETUN0
+cat > $GRAB <<EOF
+#!/bin/sh
+
+read PID
+
+chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid 
+EOF
+chmod +x $GRAB
+echo $SLICE > $GRAB.acl 
+
+
