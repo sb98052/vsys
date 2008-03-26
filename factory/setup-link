@@ -32,6 +32,9 @@ brctl addif $BRIDGE $EGRE
 brctl addif $BRIDGE $ETUN1
 ifconfig $BRIDGE up
 
+### Setup iptables so that packets are visible in the vserver
+iptables -t mangle -A FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
+
 ### Create "grab link" script
 GRAB=/vsys/grab-$ETUN0
 cat > $GRAB <<EOF
