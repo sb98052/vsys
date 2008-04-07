@@ -1,4 +1,7 @@
 #!/bin/sh
 # Mount the planetflow directory in a slice
 
-mount --bind /usr/local/fprobe /vservers/$1/pf
+#mount --bind /usr/local/fprobe /vservers/$1/pf
+# changed from request of Faiyaz
+mount --bind /var/log/fprobe-ulog /vservers/$1/pf
+
