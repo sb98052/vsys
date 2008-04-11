@@ -47,4 +47,27 @@ EOF
 chmod +x $GRAB
 echo $SLICE > $GRAB.acl 
 
+### Create "delete link" script
+DELETE=/vsys/delete-$ETUN0
+cat > $DELETE <<EOF
+#!/bin/sh
+
+# Get rid of etun devices, only need name of one of them
+echo $ETUN1 > /sys/module/etun/parameters/delif
+
+# Get rid of bridge
+ifconfig $BRIDGE down
+brctl delbr $BRIDGE
+
+# Get rid of EGRE tunnel
+ip tunnel del $EGRE
+
+# Clean up files
+rm $GRAB
+rm $DELETE
+
+EOF
+chmod +x $DELETE
+echo $SLICE > $DELETE.acl 
+
 
