@@ -22,7 +22,7 @@ $IP link set $EGRE up
 ETUN0=v$LINK
 ETUN1=etun$LINK
 echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
-ifconfig $ETUN0 up
+ifconfig $ETUN0 mtu 1458 up
 ifconfig $ETUN1 up
 
 ### Setup bridge
@@ -51,6 +51,9 @@ echo $SLICE > $GRAB.acl
 DELETE=/vsys/delete-$ETUN0
 cat > $DELETE <<EOF
 #!/bin/sh
+
+# Remove iptables rule
+iptables -t mangle -D FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
 
 # Get rid of etun devices, only need name of one of them
 echo $ETUN1 > /sys/module/etun/parameters/delif
