@@ -37,6 +37,7 @@ iptables -t mangle -A FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
 
 ### Create "grab link" script
 GRAB=/vsys/grab-$ETUN0
+rm -f $GRAB $GRAB.acl
 cat > $GRAB <<EOF
 #!/bin/sh
 
@@ -45,12 +46,16 @@ read PID
 chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid 
 EOF
 chmod +x $GRAB
+sleep 1
 echo $SLICE > $GRAB.acl 
 
 ### Create "delete link" script
 DELETE=/vsys/delete-$ETUN0
+rm -f $DELETE $DELETE.acl
 cat > $DELETE <<EOF
 #!/bin/sh
+
+read NULL
 
 # Remove iptables rule
 iptables -t mangle -D FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
@@ -66,11 +71,12 @@ brctl delbr $BRIDGE
 ip tunnel del $EGRE
 
 # Clean up files
-rm $GRAB
-rm $DELETE
+rm -f $GRAB $GRAB.acl
+rm -f $DELETE $DELETE.acl
 
 EOF
 chmod +x $DELETE
+sleep 1
 echo $SLICE > $DELETE.acl 
 
 
