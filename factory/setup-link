@@ -37,7 +37,8 @@ iptables -t mangle -A FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
 
 ### Create "grab link" script
 GRAB=/vsys/grab-$ETUN0
-rm -f $GRAB $GRAB.acl
+echo $SLICE > $GRAB.acl 
+rm -f $GRAB
 cat > $GRAB <<EOF
 #!/bin/sh
 
@@ -46,12 +47,11 @@ read PID
 chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid 
 EOF
 chmod +x $GRAB
-sleep 1
-echo $SLICE > $GRAB.acl 
 
 ### Create "delete link" script
 DELETE=/vsys/delete-$ETUN0
-rm -f $DELETE $DELETE.acl
+echo $SLICE > $DELETE.acl 
+rm -f $DELETE
 cat > $DELETE <<EOF
 #!/bin/sh
 
@@ -76,7 +76,5 @@ rm -f $DELETE $DELETE.acl
 
 EOF
 chmod +x $DELETE
-sleep 1
-echo $SLICE > $DELETE.acl 
 
 
