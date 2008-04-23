@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 3
+%define taglevel 4
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -71,6 +71,10 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Wed Apr 23 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-4
+- Pulling the latest changes for the 4.2rc2 release
+- 
+
 * Fri Feb 15 2008 Faiyaz Ahmed <faiyaza@cs.princeton.edu> - vsys-0.7-2 vsys-0.7-3
 - * daemonization, writing to a logfile, and saving the pid
 - 
