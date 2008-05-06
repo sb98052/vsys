@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 4
+%define taglevel 5
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -71,6 +71,12 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Tue May 06 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-5
+- 
+- Corrected directory that the script mounts to the correct one:
+- /var/local/fprobe
+- 
+
 * Wed Apr 23 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-4
 - Pulling the latest changes for the 4.2rc2 release
 - 
