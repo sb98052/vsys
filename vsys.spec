@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 5
+%define taglevel 6
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -71,6 +71,10 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Mon May 12 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-6
+- Added two new scripts for CoMon on 4.2
+- 
+
 * Tue May 06 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-5
 - 
 - Corrected directory that the script mounts to the correct one:
