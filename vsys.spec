@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 6
+%define taglevel 7
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,10 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Fri May 16 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-7
+- added logrotate configuration to package.
+- 
+
 * Mon May 12 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-6
 - Added two new scripts for CoMon on 4.2
 - 
