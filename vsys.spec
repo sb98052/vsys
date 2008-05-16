@@ -55,6 +55,8 @@ cp vsys $RPM_BUILD_ROOT/usr/bin
 cp vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
 cp vsys.conf $RPM_BUILD_ROOT/etc
 
+install -D -m 644 vsys.logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/vsys
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -63,6 +65,7 @@ rm -rf $RPM_BUILD_ROOT
 /etc/init.d/vsys
 /vsys/*
 /etc/vsys.conf
+%{_sysconfdir}/logrotate.d/vsys
 
 %post
 chkconfig --add vsys
