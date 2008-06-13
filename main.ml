@@ -17,7 +17,8 @@ let cmdspeclist =
     ("-conffile",Arg.Set_string(Globals.conffile), "Config file");
     ("-backend",Arg.Set_string(Globals.backend), "Backend directory");
     ("-frontend",Arg.Tuple[Arg.String(fun s->cur_dir:=s);Arg.String(fun s->cur_slice:=s;input_file_list:=(!cur_dir,!cur_slice)::!input_file_list)], "frontendN,slicenameN");
-    ("-nochroot",Arg.Set(Globals.nochroot), "Run in non-chroot environment")
+    ("-nochroot",Arg.Set(Globals.nochroot), "Run in non-chroot environment");
+    ("-failsafe",Arg.Set(Globals.failsafe), "Never crash. Be stupid, but never crash. Use at your own risk.");
   ]
 
 let cont = ref true

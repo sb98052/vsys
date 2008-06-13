@@ -6,6 +6,7 @@ let nochroot = ref false
 let conffile = ref ""
 let pid_filepath = ref "/var/run/vsys.pid"
 let log_filepath = ref "/var/log/vsys"
+let failsafe = ref false
 
 let logfd = open_out_gen [Open_append;Open_creat] 0o644 !log_filepath
 type result = Success | Failed
