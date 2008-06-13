@@ -24,7 +24,7 @@ pidfile=${PIDFILE-/var/run/$name.pid}
 lockfile=${LOCKFILE-/var/lock/subsys/$name}
 RETVAL=0
 
-vsys=${VSYS- "/usr/bin/vsys -backend $backend -conffile $conf -daemon"}
+vsys=${VSYS- "/usr/bin/vsys -failsafe -backend $backend -conffile $conf -daemon"}
 
 case "$1" in
     start)
