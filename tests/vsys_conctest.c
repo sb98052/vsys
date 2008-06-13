@@ -5,13 +5,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 int main()
 {
   FILE *fp = NULL, *fp_in = NULL;
   FILE *out_fp = NULL, *diff_fp = NULL;
-  const char* topcmd = "/vservers/pl_netflow/vsys/test.out";
-  const char* top_in_file = "/vservers/pl_netflow/vsys/test.in";
+  const char* topcmd = "feg/test.out";
+  const char* top_in_file = "feg/test.in";
   char buf[4096];
   int fd_in = -1, fd_out;
   int res;
@@ -19,17 +20,18 @@ int main()
   int count = 1;
   struct timeval tv={.tv_sec=5,.tv_usec=0};
 
-  while (count < 100) {
+  while (count < 10000) {
     fd_set readSet;
     int res;
     int nlines=0;
 
-    printf("(.)", count);
+    printf("(%d)", count);
 
     if ((fd_out = open(topcmd, O_RDONLY | O_NONBLOCK)) < 0) {
       fprintf(stderr, "error executing top\n");
       exit(-1);
     }
+
     if ((fd_in = open(top_in_file, O_WRONLY)) < 0) {
       fprintf(stderr, "error opening %s\n", top_in_file);
       exit(-1);
@@ -45,7 +47,7 @@ int main()
 
     res = select(fd_out + 1, &readSet, NULL, NULL, &tv);
     if (res < 1) {
-      printf("select failed\n");
+      printf("select failed: %d,%s\n",fd_out,strerror(errno));
       exit(-1);
     }
 
@@ -98,6 +100,7 @@ int main()
     pclose (diff_fp);
     fclose(fp);
     close(fd_in);
+    close(fd_out);
     count++;
   }
   printf("test successful.\n");
