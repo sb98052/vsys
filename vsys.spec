@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 7
+%define taglevel 8
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,10 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Mon Jun 16 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-8
+- ignore non-existent directories after restart.
+- 
+
 * Fri May 16 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-7
 - added logrotate configuration to package.
 - 
