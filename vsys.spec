@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 9
+%define taglevel 10
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,12 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Wed Jun 18 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-10
+- Changed a policy in vsys. When an acl is empty, the script doesn't show up in ANY slice. The previous behavior was for 
+- it to show up in all slices.
+- 
+- 
+
 * Wed Jun 18 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-9
 - Added a vsys script for CoMon.
 - 
