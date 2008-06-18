@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 11
+%define taglevel 12
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,10 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Wed Jun 18 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-12
+- don't overwrite the config file that already exists.
+- 
+
 * Wed Jun 18 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-11
 - Suppress some temp file that RPM creates frmo showing up as a vsys script.
 - 
