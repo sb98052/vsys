@@ -109,7 +109,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
              let acl_filter = this#make_filter acl_fqp in
              let slice_list = 
                match acl_filter with
-                 | None -> frontend_lst 
+                 | None -> [] (* No ACL *) 
                  | Some(filter) -> List.filter (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) frontend_lst 
              in 
              let is_event = list_check evlist in
@@ -162,7 +162,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
              let acl_filter = this#make_filter acl_fqp in
              let slice_list = 
                match acl_filter with
-                 | None -> frontend_lst 
+                 | None -> [] (*frontend_lst -> No ACL => No Show *)
                  | Some(filter) -> List.filter (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) frontend_lst 
              in
                if (Str.string_match file_regexp curfile 0) then
