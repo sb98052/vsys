@@ -48,6 +48,37 @@ chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid
 EOF
 chmod +x $GRAB
 
+### Create "bind link" script
+BIND=/vsys/bind-link-$ETUN0
+echo $SLICE > $BIND.acl 
+rm -f $BIND
+cat > $BIND <<EOF
+#!/bin/sh
+
+read rt
+read lt
+read burs
+
+tc qdisc add dev $EGRE root tbf rate \$rt latency \$lt burst \$burs
+
+rm -rf $BIND.acl 
+touch $BIND.acl 
+
+EOF
+chmod +x $BIND
+
+### Create "unbind link" script
+UNBIND=/vsys/unbind-link-$ETUN0
+touch $UNBIND.acl 
+rm -f $UNBIND
+cat > $UNBIND <<EOF
+#!/bin/sh
+
+tc qdisc del root dev $EGRE
+
+EOF
+chmod +x $UNBIND
+
 ### Create "delete link" script
 DELETE=/vsys/delete-$ETUN0
 echo $SLICE > $DELETE.acl 
@@ -73,8 +104,7 @@ ip tunnel del $EGRE
 # Clean up files
 rm -f $GRAB $GRAB.acl
 rm -f $DELETE $DELETE.acl
-
+rm -f $BIND $BIND.acl
+rm -f $UNBIND $UNBIND.acl
 EOF
 chmod +x $DELETE
-
-
