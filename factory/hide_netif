@@ -1,0 +1,6 @@
+#!/bin/sh
+# Remove hide_netif network attribute.  Attribute is used to hide interfaces that don't have an IP attached. 
+
+# $Id$
+
+nattribute --set --nid $1 --flag ~hide_netif
