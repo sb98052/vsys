@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 12
+%define taglevel 13
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,10 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Thu Jun 19 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-13
+- accept '-' in filenames also
+- 
+
 * Wed Jun 18 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-12
 - don't overwrite the config file that already exists.
 - 
