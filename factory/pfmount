@@ -3,5 +3,8 @@
 
 #mount --bind /usr/local/fprobe /vservers/$1/pf
 # changed from request of Faiyaz
-mount --bind /var/local/fprobe /vservers/$1/pf
-
+DEST="/vservers/$1/pf"
+mount | grep "on $DEST type" > /dev/null
+if [ $? -eq 1 ]; then
+    mount --bind /var/local/fprobe $DEST
+fi
