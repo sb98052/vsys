@@ -25,6 +25,7 @@ let cont = ref true
 
 let _ =
   printf "Vsys v%s\n" Globals.vsys_version;flush stdout;
+  fprintf logfd "Starting Vsys v%s\n" Globals.vsys_version;flush logfd;
   Arg.parse cmdspeclist (fun x->()) "Usage: vsys <list of mount points>";  
   if (!Globals.backend == "") then
       printf "Try vsys --help\n"
