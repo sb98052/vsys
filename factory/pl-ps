@@ -10,27 +10,27 @@ my %slice;
 
 open THIS_PIPE, "/bin/awk -F: \'{print \$1, \$3}\' /etc/passwd |";
 while(<THIS_PIPE>) {
-    if (/(.+)\s+(\d+)/) {
-	$slice_id{$1} = $2;
-	$slice{$2} = $1;
-    }	
+   if (/(.+)\s+(\d+)/) {
+       $slice_id{$1} = $2;
+       $slice{$2} = $1;
+   }
 }
 close THIS_PIPE;
 
-open THIS_PIPE, "/usr/sbin/vps -eo pid,user | sed 1d | awk \'{print \$1, \$NF}\' | sort -k 2 |";
+open THIS_PIPE, "/usr/sbin/vps -eo pid,user | sed 1d | awk \'{print \$1, \$2}\' | sort -k 2 |";
 while(<THIS_PIPE>) {
-    if (/(\d+)\s+(.+)$/) {
-	my $pid = $1;
-	my ($id, $sl);
+   if (/(\d+)\s+(.+)$/) {
+       my $pid = $1;
+       my ($id, $sl);
 
-	if (defined($slice_id{$2})) {
-	    $id = $slice_id{$2};
-	    $sl = $2;
-	} else {
-	    $id = $2;
-	    $sl = $slice{$2};
-	}
-	print sprintf("%s %s %s\n", $id, $sl, $pid);
-    }
+       if (defined($slice_id{$2})) {
+           $id = $slice_id{$2};
+           $sl = $2;
+       } else {
+           $id = $2;
+           $sl = $slice{$2};
+       }
+       print sprintf("%s %s %s\n", $id, $sl, $pid);
+   }
 }
 close THIS_PIPE;
