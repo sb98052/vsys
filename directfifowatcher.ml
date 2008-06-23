@@ -76,7 +76,9 @@ let connect_file fqp_in =
             clear_nonblock fifo_fdin;
             let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
               match pid with 
-                | Some(pid) ->Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
+                | Some(pid) ->
+                    if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
+                    Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
                 | None ->fprintf logfd "Error executing service: %s\n" execpath;flush logfd;reopenentry fqp_in
             );
             ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
@@ -122,8 +124,7 @@ let sigchld_handle s =
     try
       let fqp_in,fd_out = Hashtbl.find pidmap pid in
         begin
-        reopenentry fqp_in;
-        if (fd_out <> stdout) then close_if_open fd_out
+        reopenentry fqp_in
         end
 
     with _ -> ()
