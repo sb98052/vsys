@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 13
+%define taglevel 14
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,9 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Mon Jun 23 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-14
+- This change is an attempt to fix unexpected blocking after many days of uptime, reported by KyoungSoo.
+
 * Thu Jun 19 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-13
 - accept '-' in filenames also
 - 
