@@ -11,8 +11,8 @@ int main()
 {
   FILE *fp = NULL, *fp_in = NULL;
   FILE *out_fp = NULL, *diff_fp = NULL;
-  const char* topcmd = "feg/test.out";
-  const char* top_in_file = "feg/test.in";
+  const char* topcmd = "/vsys/vtop.out";
+  const char* top_in_file = "/vsys/vtop.in";
   char buf[4096];
   int fd_in = -1, fd_out;
   int res;
@@ -20,12 +20,12 @@ int main()
   int count = 1;
   struct timeval tv={.tv_sec=5,.tv_usec=0};
 
-  while (count < 10000) {
+  while (count < 100000) {
     fd_set readSet;
     int res;
     int nlines=0;
 
-    printf("(%d)", count);
+    printf("(%d)", count);fflush(stdout);
 
     if ((fd_out = open(topcmd, O_RDONLY | O_NONBLOCK)) < 0) {
       fprintf(stderr, "error executing top\n");
@@ -42,13 +42,20 @@ int main()
       exit(-1);
     }
 
-    FD_ZERO(&readSet);
-    FD_SET(fd_out, &readSet);
+    while (1) {
+	    FD_ZERO(&readSet);
+	    FD_SET(fd_out, &readSet);
 
-    res = select(fd_out + 1, &readSet, NULL, NULL, &tv);
-    if (res < 1) {
-      printf("select failed: %d,%s\n",fd_out,strerror(errno));
-      exit(-1);
+	    res = select(fd_out + 1, &readSet, NULL, NULL, NULL);
+	    if (res < 0) {
+		    if (errno == EINTR || errno == EAGAIN) {
+			    printf(".");
+			    continue;
+		    }
+		    fprintf(stderr,"select failed errno=%d errstr=%s\n", errno, strerror(errno));
+		    exit(-1);
+	    }
+	    break; /* we're done */
     }
 
     if (fcntl(fd_out, F_SETFL, flag & ~O_NONBLOCK) == -1) {
@@ -71,33 +78,15 @@ int main()
       exit(-1);
     }
 
-    if ((out_fp = fopen("/tmp/vsys_passwd_test", "w")) == NULL) {
-	    printf("could not create tmp file for test\n");
-            exit(-1);
-    }
-
     while (fgets(buf, sizeof(buf), fp) != NULL) {
-	fprintf(out_fp, "%s",buf);
-    }
-
-    fflush(out_fp);
-    fclose(out_fp);
-
-    if ((diff_fp = popen("/usr/bin/diff -u /tmp/vsys_passwd_test /etc/passwd","r")) == NULL) {
-	    printf("Could not diff results\n");
-	    exit(-1);
-    }
-
-    while (fgets(buf, sizeof(buf), diff_fp) != NULL) {
 	    nlines++;
     }
 
-    if (nlines) {
+    if (nlines<5) {
 	    printf("Test returned different results - run again to verify\n");
 	    exit(-1);
     }
 
-    pclose (diff_fp);
     fclose(fp);
     close(fd_in);
     close(fd_out);
