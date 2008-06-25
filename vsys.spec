@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 14
+%define taglevel 15
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,11 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Wed Jun 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-15
+- added patch to pl-ps needed by slicestat
+- 
+- 
+
 * Mon Jun 23 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-14
 - This change is an attempt to fix unexpected blocking after many days of uptime, reported by KyoungSoo.
 
