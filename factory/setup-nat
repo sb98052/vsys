@@ -9,8 +9,8 @@ read KEY
 modprobe etun
 
 ### Setup etun
-ETUN0=vnat0k$KEY
-ETUN1=vnat1k$KEY
+ETUN0=nat$KEY
+ETUN1=natx$KEY
 echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
 ifconfig $ETUN1 10.0.$KEY.1 up
 

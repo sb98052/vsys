@@ -4,29 +4,29 @@ IP=/sbin/ip
 
 SLICE=$1
 SLICEID=`id -u $SLICE`
-read LABEL
+read INDEX
 read REMOTE
 read KEY
 
-LINK=${LABEL}k$KEY
+LINK=${KEY}if${INDEX}
 
 modprobe ip_gre
 modprobe etun
 
 ### Setup EGRE tunnel
-EGRE=egre$LINK
+EGRE=d$LINK
 $IP tunnel add $EGRE  mode gre/eth remote $REMOTE key $KEY
 $IP link set $EGRE up
 
 ### Setup etun
-ETUN0=v$LINK
-ETUN1=etun$LINK
+ETUN0=a$LINK
+ETUN1=b$LINK
 echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
 ifconfig $ETUN0 mtu 1458 up
 ifconfig $ETUN1 up
 
 ### Setup bridge
-BRIDGE=br$LINK
+BRIDGE=c$LINK
 brctl addbr $BRIDGE
 brctl addif $BRIDGE $EGRE 
 brctl addif $BRIDGE $ETUN1
@@ -48,8 +48,8 @@ chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid
 EOF
 chmod +x $GRAB
 
-### Create "bind link" script
-BIND=/vsys/bind-link-$ETUN0
+### Create script for setting link rate
+BIND=/vsys/rate-$ETUN0
 echo $SLICE > $BIND.acl 
 rm -f $BIND
 cat > $BIND <<EOF
@@ -66,18 +66,6 @@ touch $BIND.acl
 
 EOF
 chmod +x $BIND
-
-### Create "unbind link" script
-UNBIND=/vsys/unbind-link-$ETUN0
-touch $UNBIND.acl 
-rm -f $UNBIND
-cat > $UNBIND <<EOF
-#!/bin/sh
-
-tc qdisc del root dev $EGRE
-
-EOF
-chmod +x $UNBIND
 
 ### Create "delete link" script
 DELETE=/vsys/delete-$ETUN0
@@ -105,6 +93,5 @@ ip tunnel del $EGRE
 rm -f $GRAB $GRAB.acl
 rm -f $DELETE $DELETE.acl
 rm -f $BIND $BIND.acl
-rm -f $UNBIND $UNBIND.acl
 EOF
 chmod +x $DELETE
