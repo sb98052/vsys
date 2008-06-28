@@ -10,7 +10,6 @@ let failsafe = ref false
 
 let logfd = open_out_gen [Open_append;Open_creat] 0o644 !log_filepath
 type result = Success | Failed
-
 type fname_and_fd = string option * Unix.file_descr
 
 (* Relative path, never precededed by a '/' *)

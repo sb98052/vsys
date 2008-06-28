@@ -38,10 +38,13 @@ let openentry_int fifoin =
 
 
 (** Open fifos for a session. SHOULD NOt shutdown vsys if the fifos don't exist *)
-let openentry_in root_dir fqp_in backend_spec =
-    Dirwatcher.mask_watch root_dir;
+let openentry_in rp root_dir fqp_in backend_spec =
+  match rp with 
+    | 
+    | 
+    Dirwatcher.mask_watch root_dir fqp_in;
   let fd_in = openentry_int fqp_in in
-    Dirwatcher.unmask_watch root_dir [S_Open];
+    Dirwatcher.unmask_watch root_dir fqp_in;
   let (fqp,slice_name) = backend_spec in
     Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
 
@@ -62,7 +65,8 @@ let connect_file fqp_in =
     Hashtbl.find direct_fifo_table fqp_in with _ -> None in
     match entry_info with
       | Some(_,execpath,slice_name,fifo_fdin) ->
-          fprintf logfd "Executing %s for slice %s\n" execpath slice_name;flush logfd;
+          (*fprintf logfd "Executing %s for slice %s\n" execpath
+           * slice_name;flush logfd;*)
           begin
             let len = String.length fqp_in in
             let fqp = String.sub fqp_in 0 (len-3) in

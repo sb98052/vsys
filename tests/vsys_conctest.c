@@ -11,8 +11,8 @@ int main()
 {
   FILE *fp = NULL, *fp_in = NULL;
   FILE *out_fp = NULL, *diff_fp = NULL;
-  const char* topcmd = "/vsys/vtop.out";
-  const char* top_in_file = "/vsys/vtop.in";
+  const char* topcmd = "fe/test.out";
+  const char* top_in_file = "fe/test.in";
   char buf[4096];
   int fd_in = -1, fd_out;
   int res;
@@ -25,6 +25,7 @@ int main()
     int res;
     int nlines=0;
 
+    //usleep(200);
     printf("(%d)", count);fflush(stdout);
 
     if ((fd_out = open(topcmd, O_RDONLY | O_NONBLOCK)) < 0) {
@@ -32,10 +33,12 @@ int main()
       exit(-1);
     }
 
+    printf("Opening...\n");
     if ((fd_in = open(top_in_file, O_WRONLY)) < 0) {
       fprintf(stderr, "error opening %s\n", top_in_file);
       exit(-1);
     }
+    printf("Open.\n");
 
     if ((flag = fcntl(fd_out, F_GETFL)) == -1) {
       printf("fcntl get failed\n");
@@ -46,7 +49,10 @@ int main()
 	    FD_ZERO(&readSet);
 	    FD_SET(fd_out, &readSet);
 
+    printf("Selecting...\n");
+    		sleep(1);
 	    res = select(fd_out + 1, &readSet, NULL, NULL, NULL);
+    printf("Selected...\n");
 	    if (res < 0) {
 		    if (errno == EINTR || errno == EAGAIN) {
 			    printf(".");

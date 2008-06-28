@@ -29,27 +29,24 @@ let handle_dir_event dirname evlist str =
 let add_watch dir events handler =
   let evcheck = list_check events in
   let wd = Inotify.add_watch fd dir events in
-    Hashtbl.add masks dir (wd,handler);
     Hashtbl.add wdmap wd (dir,Some(handler))
-
       (* Ignore the possibility that the whole directory can disappear and come
        * back while it is masked *)
 
-let mask_watch dir =
+let mask_watch dir file =
   try 
-    let wd,_ = Hashtbl.find masks dir in
-      Inotify.rm_watch fd wd;
-      Hashtbl.remove wdmap wd
+    Hashtbl.replace masks (dir,file) true
   with _ ->
     ()
 
-let unmask_watch dir events =
-  let _,handler = try Hashtbl.find masks dir with Not_found->fprintf logfd "unmask called without mask: %s\n" dir;flush logfd;raise Not_found in
-    try 
-      Hashtbl.remove masks dir;
-      add_watch dir events handler
-    with Not_found -> ()
-
+let unmask_watch dir file =
+  if (Hashtbl.mem masks (dir,file)) then
+    begin
+      Hashtbl.remove masks (dir,file)
+    end
+  else
+    fprintf logfd "WARNING: %s,%s -- Unpaired unmask\n" dir file;flush logfd
+  
 let asciiz s =
   let rec findfirstnul str idx len =
     if ((idx==len) || 
@@ -73,7 +70,10 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                                in
                                    match handler with
                                      | None->fprintf logfd "Unhandled watch descriptor\n";flush logfd
-                                     | Some(handler)->handler wd dirname evlist purestr
+                                     | Some(handler)->
+                                         let mask_filter = Hashtbl.mem masks (dirname,purestr) in
+                                           if (not mask_filter) then
+                                                handler wd dirname evlist purestr
                        end
                    | _ -> ()) 
       evs

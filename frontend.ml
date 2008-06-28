@@ -24,7 +24,9 @@ object(this)
         let res = Directfifowatcher.mkentry fqp abspath realperm slice_name in
           match res with 
             | Success ->
-                Directfifowatcher.openentry root_dir fqp (abspath,slice_name)
+                (* We don't want to get triggered when the .in descriptor is
+                 * opened *)
+                Directfifowatcher.openentry rp root_dir fqp (abspath,slice_name);
             | _ -> ()
 
   (** A new directory was created at the backend, make a corresponding directory
@@ -46,11 +48,7 @@ object(this)
               end;
         with Unix.Unix_error(_,_,_) ->
           Unix.mkdir fqp perm;
-        Directfifowatcher.add_dir_watch fqp
-
-
-
-            
+          Directfifowatcher.add_dir_watch fqp
 
   (** Functions corresponding to file deletion/directory removal *)
 
@@ -77,24 +75,24 @@ object(this)
           fprintf logfd "Hm. %s disappeared or not empty. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ());flush logfd
 
   initializer 
-          (
-        try 
-          let s = Unix.stat root_dir in
-            if (s.st_kind<>S_DIR) then
-              begin
-                Unix.unlink root_dir;
-                Unix.mkdir root_dir 0o700
-              end
-            else if (s.st_perm <> 0o700) then
-              begin
-                Unix.rmdir root_dir;
-                Unix.mkdir root_dir 0o700
-              end;
-        with Unix.Unix_error(_,_,_) ->
-          begin
+    (
+      try 
+        let s = Unix.stat root_dir in
+          if (s.st_kind<>S_DIR) then
+            begin
+              Unix.unlink root_dir;
+              Unix.mkdir root_dir 0o700
+            end
+          else if (s.st_perm <> 0o700) then
+            begin
+              Unix.rmdir root_dir;
+              Unix.mkdir root_dir 0o700
+            end;
+      with Unix.Unix_error(_,_,_) ->
+        begin
           try 
-          Unix.mkdir root_dir 0o700;
+            Unix.mkdir root_dir 0o700;
           with _ -> ();
-          end);
-        Directfifowatcher.add_dir_watch root_dir
+        end);
+          Directfifowatcher.add_dir_watch root_dir
 end
