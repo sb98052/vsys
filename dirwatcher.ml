@@ -20,14 +20,13 @@ let rec list_check lst elt =
 
 let handle_dir_event dirname evlist str = 
   let fname = String.concat "/" [dirname;str] in
-    fprintf logfd "File: %s. " fname;List.iter 
-                                       (fun e -> 
-                                          fprintf logfd "Event: %s\n" (string_of_event e)) 
-                                       evlist;
-    flush logfd
+    logprint "File: %s. " fname;
+    List.iter 
+      (fun e -> 
+         logprint "Event: %s\n" (string_of_event e)) 
+      evlist
 
 let add_watch dir events handler =
-  let evcheck = list_check events in
   let wd = Inotify.add_watch fd dir events in
     Hashtbl.add wdmap wd (dir,Some(handler))
       (* Ignore the possibility that the whole directory can disappear and come
@@ -35,6 +34,7 @@ let add_watch dir events handler =
 
 let mask_watch fqp =
   try 
+    print "Masking %s %d\n" fqp (String.length fqp);
     Hashtbl.replace masks fqp true
   with _ ->
     ()
@@ -45,7 +45,7 @@ let unmask_watch fqp =
       Hashtbl.remove masks fqp
     end
   else
-    fprintf logfd "WARNING: %s -- Unpaired unmask\n" fqp;flush logfd
+    logprint "WARNING: %s -- Unpaired unmask\n" fqp
   
 let asciiz s =
   let rec findfirstnul str idx len =
@@ -69,14 +69,18 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                                  try Hashtbl.find wdmap wd with Not_found->("",None)
                                in
                                    match handler with
-                                     | None->fprintf logfd "Unhandled watch descriptor\n";flush logfd
+                                     | None->logprint "Unhandled watch descriptor\n"
                                      | Some(handler)->
                                          let fqp = String.concat "/" [dirname;purestr] in
                                          let mask_filter = Hashtbl.mem masks fqp in
-                                           if (not mask_filter) then
-                                             begin
+                                           begin
+                                           (*print "Received event for - %s\n"
+                                            * fqp;*)
+                                           if ((not mask_filter) && false) then
                                                 handler wd dirname evlist purestr
-                                             end
+                                           else
+                                             print "%s is masked\n" fqp
+                                           end
                        end
                    | _ -> ()) 
       evs

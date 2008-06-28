@@ -8,7 +8,7 @@ let split_conf_line s =
 let check_dir fe = 
   let (vsysdir,slice) = fe in
   let verdict = try Some(Unix.stat vsysdir) with
-      _ -> fprintf logfd "vsys directory not setup for slice %s\n" slice;flush logfd;None
+      _ -> logprint "vsys directory not setup for slice %s\n" slice;None
   in
     match verdict with 
       | None->false 
@@ -22,7 +22,7 @@ let rec in_list elt lst =
 
 let read_frontends f =
   let setup_ok = if (!Globals.failsafe) then check_dir else fun _ -> true in
-  let f_file = try open_in f with e -> fprintf logfd "Could not open config file\n";flush logfd;raise e
+  let f_file = try open_in f with e -> logprint "Could not open config file\n";raise e
   in
   let rec read_conf_file cur_list =
     let next_line = try Some(input_line f_file) with _ -> None in

@@ -61,7 +61,7 @@ object(this)
           Unix.unlink fqp_in;
           Unix.unlink fqp_out
         with _ ->
-          fprintf logfd "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ());flush logfd
+          logprint "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ())
 
   method rmdir rp =
     match rp with Relpath(rel) ->
@@ -70,7 +70,7 @@ object(this)
         try
           Unix.rmdir fqp
         with _ ->
-          fprintf logfd "Hm. %s disappeared or not empty. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ());flush logfd
+          logprint "Hm. %s disappeared or not empty. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ())
 
   initializer 
     (

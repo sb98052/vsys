@@ -25,8 +25,8 @@ let cmdspeclist =
   ]
 
 let _ =
-  printf "Starting Vsys v%s\n" Globals.vsys_version;flush stdout;
-  fprintf logfd "Starting Vsys v%s\n" Globals.vsys_version;flush logfd;
+  logprint "Starting Vsys v%s\n" Globals.vsys_version;
+  print "Starting Vsys v%s\n" Globals.vsys_version;
   Arg.parse cmdspeclist (fun x->()) "Usage: vsys <list of mount points>";  
   if (!Globals.backend == "") then
     printf "Try vsys --help\n"
@@ -34,7 +34,7 @@ let _ =
     begin
       if (!daemonize) then
         begin
-          printf "Daemonizing\n";flush Pervasives.stdout;
+          print "Daemonizing\n";
           let child = Unix.fork () in
             if (child <> 0) then
               begin
@@ -56,8 +56,7 @@ let _ =
 
       let felst = List.map 
                     (fun lst->let (x,y)=lst in 
-                       fprintf logfd "Slice %s (%s)\n" x y;
-                       flush logfd;
+                       logprint "Slice %s (%s)\n" x y;
                        new frontendHandler lst) 
                     !input_file_list in
       let _ = new backendHandler !Globals.backend felst in

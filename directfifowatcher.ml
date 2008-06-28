@@ -40,7 +40,7 @@ let rec list_check lst elt =
 let openentry_safet fifoin =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
-        e->fprintf logfd "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;flush logfd;raise e
+        e->logprint "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;raise e
   in
     fdin
 
@@ -77,7 +77,7 @@ let connect_file fqp_in =
             let fqp_out = String.concat "." [fqp;"out"] in
             let fifo_fdout =
               try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
-                  _->fprintf logfd "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;flush logfd;stdout
+                  _->logprint "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;stdout
             in
               ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
               (
@@ -87,7 +87,7 @@ let connect_file fqp_in =
                     | Some(pid) ->
                         if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
                         Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
-                    | None ->fprintf logfd "Error executing service: %s\n" execpath;flush logfd;reopenentry fqp_in
+                    | None ->logprint "Error executing service: %s\n" execpath;reopenentry fqp_in
               );
               ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
           end
@@ -96,7 +96,7 @@ let connect_file fqp_in =
 
 (** Make a pair of fifo entries *)
 let mkentry fqp abspath perm uname = 
-  fprintf logfd "Making entry %s->%s\n" fqp abspath;flush logfd;
+  logprint "Making entry %s->%s\n" fqp abspath;
   let fifoin=sprintf "%s.in" fqp in
   let fifoout=sprintf "%s.out" fqp in
     (try Unix.unlink fifoin with _ -> ());
@@ -114,7 +114,7 @@ let mkentry fqp abspath perm uname =
          );
          Success
      with 
-         e->fprintf logfd "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush logfd;Failed)
+         e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;Failed)
 
 
 (** Close fifos that just got removed *)

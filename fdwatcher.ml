@@ -30,6 +30,6 @@ let start_watch () =
                        func evd fd_other
                      with e->
                        let wtf = Printexc.to_string e in
-                         fprintf logfd "%s\n" wtf
+                         logprint "%s\n" wtf
                 ) fds
   done

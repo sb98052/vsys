@@ -54,7 +54,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                 Dirwatcher.add_watch fqp [S_Create;S_Delete] func 
               end
               with _ ->
-                fprintf logfd "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;flush logfd;
+                logprint "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;
            )
            slice_list
 
@@ -163,7 +163,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                              | S_REG ->
                                  this#new_script slice_list fqp
                              | _ ->
-                                 fprintf logfd "Don't know what to do with %s\n" curfile;flush logfd
+                                 logprint "Don't know what to do with %s\n" curfile
                          end
                  end
            with _
