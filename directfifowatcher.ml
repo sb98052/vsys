@@ -21,41 +21,45 @@ open Splice
 
 let close_if_open fd = (try (ignore(close fd);) with _ -> ())
 
-let direct_fifo_table: (string,(string*string*string*Unix.file_descr) option) Hashtbl.t = Hashtbl.create 1024
-let pidmap: (int,string*Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
+type in_pathname = string
+type directory = string
+type base_pathname = string
+type slice_name = string
+
+
+let direct_fifo_table: (in_pathname,(directory*base_pathname*slice_name*Unix.file_descr) option) Hashtbl.t = 
+  Hashtbl.create 1024
+
+let pidmap: (int,in_pathname * Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
 
 let rec list_check lst elt =
   match lst with
     | [] -> false
     | car::cdr -> if (car==elt) then true else list_check cdr elt
 
-let openentry_int fifoin =
+let openentry_safet fifoin =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
         e->fprintf logfd "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;flush logfd;raise e
   in
     fdin
 
-
-(** Open fifos for a session. SHOULD NOt shutdown vsys if the fifos don't exist *)
-let openentry_in rp root_dir fqp_in backend_spec =
-  match rp with 
-    | 
-    | 
-    Dirwatcher.mask_watch root_dir fqp_in;
-  let fd_in = openentry_int fqp_in in
-    Dirwatcher.unmask_watch root_dir fqp_in;
-  let (fqp,slice_name) = backend_spec in
-    Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
+(** Open entry safely, by first masking out the file to be opened *)
+let openentry_safe root_dir fqp_in backend_spec =
+  Dirwatcher.mask_watch fqp_in;
+  let fd_in = openentry_safet fqp_in in
+    Dirwatcher.unmask_watch fqp_in;
+    let (fqp,slice_name) = backend_spec in
+      Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
 
 let openentry root_dir fqp backend_spec =
   let fqp_in = String.concat "." [fqp;"in"] in
-    openentry_in root_dir fqp_in backend_spec
+    openentry_safe root_dir fqp_in backend_spec
 
 let reopenentry fifoin =
   let entry = try Hashtbl.find direct_fifo_table fifoin with _ -> None in
     match entry with
-      | Some(dir, fqp,slice_name,fd) -> close_if_open fd;openentry_in dir fifoin (fqp,slice_name)
+      | Some(dir, fqp,slice_name,fd) -> close_if_open fd;openentry_safe dir fifoin (fqp,slice_name)
       | None -> ()
 
 (* vsys is activated when a client opens an in file *)
@@ -75,17 +79,17 @@ let connect_file fqp_in =
               try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
                   _->fprintf logfd "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;flush logfd;stdout
             in
-            ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
-            (
-            clear_nonblock fifo_fdin;
-            let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
-              match pid with 
-                | Some(pid) ->
-                    if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
-                    Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
-                | None ->fprintf logfd "Error executing service: %s\n" execpath;flush logfd;reopenentry fqp_in
-            );
-            ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
+              ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
+              (
+                clear_nonblock fifo_fdin;
+                let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
+                  match pid with 
+                    | Some(pid) ->
+                        if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
+                        Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
+                    | None ->fprintf logfd "Error executing service: %s\n" execpath;flush logfd;reopenentry fqp_in
+              );
+              ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
           end
       | None -> ()
 
@@ -128,7 +132,7 @@ let sigchld_handle s =
     try
       let fqp_in,fd_out = Hashtbl.find pidmap pid in
         begin
-        reopenentry fqp_in
+          reopenentry fqp_in
         end
 
     with _ -> ()
@@ -136,18 +140,17 @@ let sigchld_handle s =
 let rec add_dir_watch fqp =
   Dirwatcher.add_watch fqp [S_Open] direct_fifo_handler
 and
-direct_fifo_handler wd dirname evlist fname =
+    direct_fifo_handler wd dirname evlist fname =
   let is_event = list_check evlist in
     if (is_event Open) then 
       let fqp_in = String.concat "/" [dirname;fname] in
-      begin
-        connect_file fqp_in;
-        add_dir_watch dirname
-      end
+        begin
+          connect_file fqp_in;
+          add_dir_watch dirname
+        end
 
 let del_dir_watch fqp =
-  (* XXX Dirwatcher.del_watch fqp *)
   ()
 
 let initialize () =
-      Sys.set_signal Sys.sigchld (Sys.Signal_handle sigchld_handle)
+  Sys.set_signal Sys.sigchld (Sys.Signal_handle sigchld_handle)

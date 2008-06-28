@@ -33,19 +33,19 @@ let add_watch dir events handler =
       (* Ignore the possibility that the whole directory can disappear and come
        * back while it is masked *)
 
-let mask_watch dir file =
+let mask_watch fqp =
   try 
-    Hashtbl.replace masks (dir,file) true
+    Hashtbl.replace masks fqp true
   with _ ->
     ()
 
-let unmask_watch dir file =
-  if (Hashtbl.mem masks (dir,file)) then
+let unmask_watch fqp =
+  if (Hashtbl.mem masks fqp) then
     begin
-      Hashtbl.remove masks (dir,file)
+      Hashtbl.remove masks fqp
     end
   else
-    fprintf logfd "WARNING: %s,%s -- Unpaired unmask\n" dir file;flush logfd
+    fprintf logfd "WARNING: %s -- Unpaired unmask\n" fqp;flush logfd
   
 let asciiz s =
   let rec findfirstnul str idx len =
@@ -71,9 +71,12 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                                    match handler with
                                      | None->fprintf logfd "Unhandled watch descriptor\n";flush logfd
                                      | Some(handler)->
-                                         let mask_filter = Hashtbl.mem masks (dirname,purestr) in
+                                         let fqp = String.concat "/" [dirname;purestr] in
+                                         let mask_filter = Hashtbl.mem masks fqp in
                                            if (not mask_filter) then
+                                             begin
                                                 handler wd dirname evlist purestr
+                                             end
                        end
                    | _ -> ()) 
       evs

@@ -24,9 +24,7 @@ object(this)
         let res = Directfifowatcher.mkentry fqp abspath realperm slice_name in
           match res with 
             | Success ->
-                (* We don't want to get triggered when the .in descriptor is
-                 * opened *)
-                Directfifowatcher.openentry rp root_dir fqp (abspath,slice_name);
+                Directfifowatcher.openentry root_dir fqp (abspath,slice_name)
             | _ -> ()
 
   (** A new directory was created at the backend, make a corresponding directory

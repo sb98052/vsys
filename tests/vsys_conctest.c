@@ -50,7 +50,6 @@ int main()
 	    FD_SET(fd_out, &readSet);
 
     printf("Selecting...\n");
-    		sleep(1);
 	    res = select(fd_out + 1, &readSet, NULL, NULL, NULL);
     printf("Selected...\n");
 	    if (res < 0) {
