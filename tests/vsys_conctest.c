@@ -33,13 +33,10 @@ int main()
       exit(-1);
     }
 
-    printf("Opening...\n");
     if ((fd_in = open(top_in_file, O_WRONLY)) < 0) {
       fprintf(stderr, "error opening %s\n", top_in_file);
       exit(-1);
     }
-    printf("Open.\n");
-
     if ((flag = fcntl(fd_out, F_GETFL)) == -1) {
       printf("fcntl get failed\n");
       exit(-1);
@@ -49,9 +46,7 @@ int main()
 	    FD_ZERO(&readSet);
 	    FD_SET(fd_out, &readSet);
 
-    printf("Selecting...\n");
 	    res = select(fd_out + 1, &readSet, NULL, NULL, NULL);
-    printf("Selected...\n");
 	    if (res < 0) {
 		    if (errno == EINTR || errno == EAGAIN) {
 			    printf(".");

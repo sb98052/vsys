@@ -34,7 +34,6 @@ let add_watch dir events handler =
 
 let mask_watch fqp =
   try 
-    print "Masking %s %d\n" fqp (String.length fqp);
     Hashtbl.replace masks fqp true
   with _ ->
     ()
@@ -74,12 +73,15 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                                          let fqp = String.concat "/" [dirname;purestr] in
                                          let mask_filter = Hashtbl.mem masks fqp in
                                            begin
-                                           (*print "Received event for - %s\n"
-                                            * fqp;*)
-                                           if ((not mask_filter) && false) then
-                                                handler wd dirname evlist purestr
+                                           if ((not mask_filter)) then
+                                             begin
+                                                (*logprint "Received event for - %s\n"
+                                                        fqp;*)
+                                                handler wd dirname evlist
+                                                 purestr
+                                             end
                                            else
-                                             print "%s is masked\n" fqp
+                                             unmask_watch fqp
                                            end
                        end
                    | _ -> ()) 

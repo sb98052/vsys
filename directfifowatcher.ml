@@ -37,7 +37,7 @@ let rec list_check lst elt =
     | [] -> false
     | car::cdr -> if (car==elt) then true else list_check cdr elt
 
-let openentry_safet fifoin =
+let openentry_int fifoin =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
         e->logprint "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;raise e
@@ -47,8 +47,7 @@ let openentry_safet fifoin =
 (** Open entry safely, by first masking out the file to be opened *)
 let openentry_safe root_dir fqp_in backend_spec =
   Dirwatcher.mask_watch fqp_in;
-  let fd_in = openentry_safet fqp_in in
-    Dirwatcher.unmask_watch fqp_in;
+  let fd_in = openentry_int fqp_in in
     let (fqp,slice_name) = backend_spec in
       Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
 
@@ -144,10 +143,7 @@ and
   let is_event = list_check evlist in
     if (is_event Open) then 
       let fqp_in = String.concat "/" [dirname;fname] in
-        begin
-          connect_file fqp_in;
-          add_dir_watch dirname
-        end
+          connect_file fqp_in
 
 let del_dir_watch fqp =
   ()
