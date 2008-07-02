@@ -35,7 +35,7 @@ int main()
     //printf("((0))");fflush(stdout);
     while ((fd_in = open(top_in_file, O_WRONLY| O_NONBLOCK)) < 0) {
       fprintf(stderr, "Waiting for %s (%s)\n", top_in_file,strerror(errno));
-     	sleep (1); 
+     	usleep (50); 
     }
     printf("%d open\n",fd_in);
 
