@@ -10,6 +10,7 @@ let failsafe = ref false
 
 let logfd = open_out_gen [Open_append;Open_creat] 0o644 !log_filepath
 let logprint fmt = Printf.fprintf logfd (fmt ^^ "%!")
+let debprint fmt = if (!debug) then Printf.fprintf logfd (fmt ^^ "%!")
 let print fmt = Printf.printf (fmt ^^ "%!")
 
 type result = Success | Failed

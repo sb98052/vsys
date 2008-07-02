@@ -9,7 +9,6 @@ open Globals
  * leaks - fix implementation of rmdir accordingly
  *)
 let wdmap = Hashtbl.create 1024
-let masks = Hashtbl.create 1024
 
 let fd = Inotify.init ()
 
@@ -18,13 +17,16 @@ let rec list_check lst elt =
     | [] -> false
     | car::cdr -> if (car==elt) then true else list_check cdr elt
 
-let handle_dir_event dirname evlist str = 
-  let fname = String.concat "/" [dirname;str] in
-    logprint "File: %s. " fname;
+let pevlist evlist =
     List.iter 
       (fun e -> 
          logprint "Event: %s\n" (string_of_event e)) 
       evlist
+
+let handle_dir_event dirname evlist str = 
+  let fname = String.concat "/" [dirname;str] in
+    logprint "File: %s. " fname;
+    pevlist evlist
 
 let add_watch dir events handler =
   let wd = Inotify.add_watch fd dir events in
@@ -32,20 +34,6 @@ let add_watch dir events handler =
       (* Ignore the possibility that the whole directory can disappear and come
        * back while it is masked *)
 
-let mask_watch fqp =
-  try 
-    Hashtbl.replace masks fqp true
-  with _ ->
-    ()
-
-let unmask_watch fqp =
-  if (Hashtbl.mem masks fqp) then
-    begin
-      Hashtbl.remove masks fqp
-    end
-  else
-    logprint "WARNING: %s -- Unpaired unmask\n" fqp
-  
 let asciiz s =
   let rec findfirstnul str idx len =
     if ((idx==len) || 
@@ -67,28 +55,15 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                                let (dirname,handler) = 
                                  try Hashtbl.find wdmap wd with Not_found->("",None)
                                in
-                                   match handler with
-                                     | None->logprint "Unhandled watch descriptor\n"
-                                     | Some(handler)->
-                                         let fqp = String.concat "/" [dirname;purestr] in
-                                           logprint "Received event from %s\n" fqp;
-                                         let mask_filter = Hashtbl.mem masks fqp in
-                                           begin
-                                           if ((not mask_filter)) then
-                                             begin
-                                               (*
-                                                logprint "Received event for - %s\n"
-                                                        fqp;*)
-                                                handler wd dirname evlist
-                                                 purestr
-                                             end
-                                           else
-                                             begin
-                                                (*logprint "Unmasking %s\n"
-                                                 * fqp;*)
-                                                unmask_watch fqp
-                                             end
-                                           end
+                                 match handler with
+                                   | None->
+                                       logprint "Unhandled watch descriptor\n"
+                                   | Some(handler)->
+                                       let fqp = String.concat "/" [dirname;purestr] in
+                                         begin
+                                         handler wd dirname evlist
+                                           purestr
+                                         end
                        end
                    | _ -> ()) 
       evs
