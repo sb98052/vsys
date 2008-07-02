@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 15
+%define taglevel 16
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -74,6 +74,9 @@ chkconfig vsys on
 %postun
 
 %changelog
+* Wed Jul 02 2008 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.7-16
+- Usability changes that are necessary for the stability of CoMon
+
 * Wed Jun 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-15
 - added patch to pl-ps needed by slicestat
 - 
