@@ -71,17 +71,23 @@ let receive_event (eventdescriptor:fname_and_fd) (bla:fname_and_fd) =
                                      | None->logprint "Unhandled watch descriptor\n"
                                      | Some(handler)->
                                          let fqp = String.concat "/" [dirname;purestr] in
+                                           logprint "Received event from %s\n" fqp;
                                          let mask_filter = Hashtbl.mem masks fqp in
                                            begin
                                            if ((not mask_filter)) then
                                              begin
-                                                (*logprint "Received event for - %s\n"
+                                               (*
+                                                logprint "Received event for - %s\n"
                                                         fqp;*)
                                                 handler wd dirname evlist
                                                  purestr
                                              end
                                            else
-                                             unmask_watch fqp
+                                             begin
+                                                (*logprint "Unmasking %s\n"
+                                                 * fqp;*)
+                                                unmask_watch fqp
+                                             end
                                            end
                        end
                    | _ -> ()) 

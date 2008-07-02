@@ -52,14 +52,17 @@ let openentry_safe root_dir fqp_in backend_spec =
       Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
 
 let openentry root_dir fqp backend_spec =
+  () (*
   let fqp_in = String.concat "." [fqp;"in"] in
-    openentry_safe root_dir fqp_in backend_spec
+    openentry_safe root_dir fqp_in backend_spec*)
 
 let reopenentry fifoin =
+  ()
+    (*
   let entry = try Hashtbl.find direct_fifo_table fifoin with _ -> None in
     match entry with
       | Some(dir, fqp,slice_name,fd) -> close_if_open fd;openentry_safe dir fifoin (fqp,slice_name)
-      | None -> ()
+      | None -> ()*)
 
 (* vsys is activated when a client opens an in file *)
 let connect_file fqp_in =
@@ -68,8 +71,6 @@ let connect_file fqp_in =
     Hashtbl.find direct_fifo_table fqp_in with _ -> None in
     match entry_info with
       | Some(_,execpath,slice_name,fifo_fdin) ->
-          (*fprintf logfd "Executing %s for slice %s\n" execpath
-           * slice_name;flush logfd;*)
           begin
             let len = String.length fqp_in in
             let fqp = String.sub fqp_in 0 (len-3) in
@@ -133,7 +134,6 @@ let sigchld_handle s =
         begin
           reopenentry fqp_in
         end
-
     with _ -> ()
 
 let rec add_dir_watch fqp =

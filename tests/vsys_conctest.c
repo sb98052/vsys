@@ -33,6 +33,7 @@ int main()
       exit(-1);
     }
 
+//    printf("(opening in file)");
     if ((fd_in = open(top_in_file, O_WRONLY)) < 0) {
       fprintf(stderr, "error opening %s\n", top_in_file);
       exit(-1);
