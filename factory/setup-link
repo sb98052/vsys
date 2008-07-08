@@ -56,10 +56,9 @@ cat > $BIND <<EOF
 #!/bin/sh
 
 read rt
-read lt
-read burs
 
-tc qdisc add dev $EGRE root tbf rate \$rt latency \$lt burst \$burs
+tc qdisc add dev $EGRE root handle 1: htb default 10
+tc class add dev $EGRE parent 1: classid 1:10 htb rate \$rt ceil \$rt
 
 rm -rf $BIND.acl 
 touch $BIND.acl 
