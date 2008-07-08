@@ -20,7 +20,7 @@ int main()
   int count = 1;
   struct timeval tv={.tv_sec=5,.tv_usec=0};
 
-  while (count < 100000) {
+  while (count < 1000000) {
     fd_set readSet;
     int res;
     int nlines=0;
@@ -37,7 +37,6 @@ int main()
       fprintf(stderr, "Waiting for %s (%s)\n", top_in_file,strerror(errno));
      	usleep (50); 
     }
-    printf("%d open\n",fd_in);
 
     //printf("(1)");
     if ((flag = fcntl(fd_out, F_GETFL)) == -1) {

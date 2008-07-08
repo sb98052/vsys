@@ -38,7 +38,7 @@ case "$1" in
     stop)
         echo -n "Stopping $name:"
         killproc $name
-        killproc $name
+        #killproc $name - Why were there 2 instances of this? :-|
         RETVAL=$?
         echo
         [ $RETVAL -eq 0 ] && rm -f ${lockfile} ${pidfile}
