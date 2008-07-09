@@ -36,7 +36,7 @@ ifconfig $BRIDGE up
 iptables -t mangle -A FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
 
 ### Create "grab link" script
-GRAB=/vsys/grab-$ETUN0
+GRAB=/vsys/local_grab-$ETUN0
 echo $SLICE > $GRAB.acl 
 rm -f $GRAB
 cat > $GRAB <<EOF
@@ -49,7 +49,7 @@ EOF
 chmod +x $GRAB
 
 ### Create script for setting link rate
-BIND=/vsys/rate-$ETUN0
+BIND=/vsys/local_rate-$ETUN0
 echo $SLICE > $BIND.acl 
 rm -f $BIND
 cat > $BIND <<EOF
@@ -67,7 +67,7 @@ EOF
 chmod +x $BIND
 
 ### Create "delete link" script
-DELETE=/vsys/delete-$ETUN0
+DELETE=/vsys/local_delete-$ETUN0
 echo $SLICE > $DELETE.acl 
 rm -f $DELETE
 cat > $DELETE <<EOF

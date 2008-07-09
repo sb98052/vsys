@@ -19,7 +19,7 @@ ifconfig $ETUN1 10.0.$KEY.1 up
 /sbin/iptables -A FORWARD -i $ETUN1 -o eth0 -j ACCEPT
 
 ### Create "grab link" script
-GRAB=/vsys/grab-$ETUN0
+GRAB=/vsys/local_grab-$ETUN0
 echo $SLICE > $GRAB.acl 
 rm -f $GRAB
 cat > $GRAB <<EOF
@@ -32,7 +32,7 @@ EOF
 chmod +x $GRAB
 
 ### Create "delete link" script
-DELETE=/vsys/delete-$ETUN0
+DELETE=/vsys/local_delete-$ETUN0
 echo $SLICE > $DELETE.acl 
 rm -f $DELETE
 cat > $DELETE <<EOF
