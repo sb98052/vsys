@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 16
+%define taglevel 17
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,10 @@ fi
 %postun
 
 %changelog
+* Tue Jul 15 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-17
+- * Don't kill vsys twice on restarts, do it only once
+- * Restart vsys following a reinstall
+
 * Wed Jul 02 2008 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.7-16
 - Usability changes that are necessary for the stability of CoMon
 
