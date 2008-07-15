@@ -70,6 +70,9 @@ rm -rf $RPM_BUILD_ROOT
 %post
 chkconfig --add vsys
 chkconfig vsys on
+if [ "$PL_BOOTCD" != "1" ] ; then
+        service vsys restart
+fi
 
 %postun
 
