@@ -6,5 +6,5 @@
 DEST="/vservers/$1/pf"
 mount | grep "on $DEST type" > /dev/null
 if [ $? -eq 1 ]; then
-    mount --bind /var/local/fprobe $DEST
+    mount --bind /var/local/fprobe -o ro $DEST
 fi
