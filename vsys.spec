@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 17
+%define taglevel 18
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Thu Jul 17 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-18
+- Change for someone at Imperial.ac.uk, who wants access to Netflow data.
+
 * Tue Jul 15 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-17
 - * Don't kill vsys twice on restarts, do it only once
 - * Restart vsys following a reinstall
