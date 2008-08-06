@@ -50,7 +50,7 @@ make
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 mkdir -p $RPM_BUILD_ROOT/vsys
-cp factory-exec/* $RPM_BUILD_ROOT/vsys
+cp factory/exec/* $RPM_BUILD_ROOT/vsys
 cp vsys $RPM_BUILD_ROOT/usr/bin
 cp vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
 cp vsys.conf $RPM_BUILD_ROOT/etc

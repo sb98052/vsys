@@ -1,4 +1,4 @@
-all: vsys factory-exec/*
+all: vsys factory/.done 
 
 include .dep
 
@@ -39,11 +39,10 @@ vsys: ocaml_inotify-0.4/inotify.cmxa globals.cmx fdwatcher.cmx conffile.cmx spli
 vsys.b: ocaml_inotify-0.4/inotify.cma inotify.cmi globals.ml fdwatcher.ml dirwatcher.ml directfifowatcher.ml frontend.ml backend.ml main.ml
 	ocamlc -g str.cma unix.cma ocaml_inotify-0.4/inotify.cma globals.cmo fdwatcher.cmo dirwatcher.cmo directfifowatcher.cmo frontend.cmo backend.cmo str.cma conffile.cmo main.cmo -o vsys.b
 
-factory-exec/%: factory/%
+factory/.done: factory/*
 	$(MAKE) -C factory/
-	cp -fR factory/ factory-exec
 
-install: vsys factory
+install: vsys factory/.done
 	cp vsys $(INSTALL_DIR)/usr/bin
 	cp vsys-initscript $(INSTALL_DIR)/etc/init.d/vsys 
 	cp -fR factory/ factory-exec/
