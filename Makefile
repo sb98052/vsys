@@ -40,7 +40,7 @@ vsys.b: ocaml_inotify-0.4/inotify.cma inotify.cmi globals.ml fdwatcher.ml dirwat
 	ocamlc -g str.cma unix.cma ocaml_inotify-0.4/inotify.cma globals.cmo fdwatcher.cmo dirwatcher.cmo directfifowatcher.cmo frontend.cmo backend.cmo str.cma conffile.cmo main.cmo -o vsys.b
 
 factory-exec/%: factory/%
-	make -C factory/
+	$(MAKE) -C factory/
 	cp -fR factory/ factory-exec
 
 install: vsys factory
@@ -53,4 +53,5 @@ dep:
 
 clean:
 	$(MAKE) -C ocaml_inotify-0.4 clean
+	$(MAKE) -C factory clean
 	rm -f *.cmi *.cmx sys usys *.o vsys vsys.b *.html *.css 
