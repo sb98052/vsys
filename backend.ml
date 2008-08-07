@@ -15,10 +15,6 @@ open Fifowatcher
 open Frontend
 open Printf
 
-(** Helper functions:
-
-*)
-
 (** Turn an absolute path into a relative path. *)
 let delete_prefix prefix str =
   let len = String.length str in
@@ -35,7 +31,6 @@ let rec list_check lst elt =
     | [] -> false
     | car::cdr -> if (car==elt) then true else list_check cdr elt
 
-
 (** The backendhandler class: defines event handlers for events in
 the backend backend directory.
   @param dir_root The location of the backend in the server context (eg. root context for vservers)
@@ -45,34 +40,30 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
    let mk_rel_path = delete_prefix dir_root in object(this)
 
      (** Regular expression that defines a legal script name. Filter out
-       * temporary files using this *)
-     val file_regexp = Str.regexp "[a-zA-Z][a-zA-Z0-9_\.]*"
+       * temporary files using it *)
+     val file_regexp = Str.regexp "^[a-zA-Z][a-zA-Z0-9_\.\-]*$"
      val acl_file_regexp = Str.regexp ".*acl$"
 
-     val dir_regexp = Str.regexp "^dir_";
-     val acl_regexp = Str.regexp ".*_.*";
-
      (** Somebody created a new directory *)
-     (* XXX Race condition here *)
      method private new_dir slice_list fqp func =
        let s = Unix.stat fqp in
          List.iter 
            (fun frontend->
               try begin 
                 frontend#mkdir (mk_rel_path fqp) (s.st_perm);
-                Dirwatcher.add_watch fqp [S_Create;S_Delete] (Some(func)) 
+                Dirwatcher.add_watch fqp [S_Create;S_Delete] func 
               end
               with _ ->
-                printf "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;flush Pervasives.stdout;
+                logprint "Could not create %s. Looks like a slice shot itself in the foot\n" fqp;
            )
            slice_list
 
      (** Somebody copied in a new script *)
-     (* XXX Race condition here *)
      method private new_script slice_list fqp =
        let s = Unix.stat fqp in
          List.iter (fun frontend->
-                      frontend#mkentry (mk_rel_path fqp) fqp (s.st_perm)) slice_list 
+                      frontend#mkentry (mk_rel_path fqp) fqp (s.st_perm)) 
+                   slice_list 
 
      method private make_filter acl_fqp =
        let filter = Hashtbl.create 16 in
@@ -84,7 +75,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
              with _ -> None
            in
              match next_item with
-               | None -> cur_filter
+               | None -> close_in acl_file;cur_filter
                | Some(item) -> 
                    Hashtbl.add cur_filter item true;
                    read_acl cur_filter
@@ -93,12 +84,14 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        with _ ->
          None
 
+     method is_acl fname = Str.string_match acl_file_regexp fname 0
+
      (** Gets called every time there's an inotify event at the backend 
        @param dirname Name of the backend directory
        @param evlist Description of what happened
        @param fname Name of the file that the event applies to
      *)
-     method handle_dir_event dirname evlist fname = 
+     method handle_dir_event _ dirname evlist fname = 
        let fqp = String.concat "/" [dirname;fname] in
          if ((Str.string_match file_regexp fname 0) && not (Str.string_match acl_file_regexp fname 0)) then  
            begin
@@ -107,8 +100,10 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
              let acl_filter = this#make_filter acl_fqp in
              let slice_list = 
                match acl_filter with
-                 | None -> frontend_lst 
-                 | Some(filter) -> List.filter (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) frontend_lst 
+                 | None -> [] (* No ACL *) 
+                 | Some(filter) -> List.filter 
+                                     (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) 
+                                     frontend_lst 
              in 
              let is_event = list_check evlist in
                if (is_event Create) then
@@ -120,13 +115,6 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                    else
                      (* It's a new script *)
                      begin
-                       (*
-                        if (Str.string_match dir_regexp fname 0) then
-                        let fqp = String.concat "/" [dirname;String.sub fname 4 ((String.length fname)-4+1)]  in 
-                        let real_fqp = String.concat "/" [dirname;fname]  in 
-                        this#new_dir fqp this#handle_spool_event;
-                        Hashtbl.add spools fqp real_fqp
-                        else*)
                        this#new_script slice_list fqp
                      end
                  end
@@ -143,7 +131,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                  end
            end
          else (* regex not matched *)
-           ()
+           fprintf logfd "Rejected weird entry %s\n" fname
 
      (** Initializer - build the initial tree based on the contents of /vsys *)
      initializer 
@@ -152,33 +140,38 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        let cont = ref true in
          while (!cont) do
            try 
-             let curfile = readdir dir_handle  in
-             let fqp = String.concat "/" [dir;curfile] in
-             let acl_fqp = String.concat "." [fqp;"acl"] in
-             let acl_filter = this#make_filter acl_fqp in
-             let slice_list = 
-               match acl_filter with
-                 | None -> frontend_lst 
-                 | Some(filter) -> List.filter (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) frontend_lst 
-             in
-               if (Str.string_match file_regexp curfile 0 && not (Str.string_match acl_file_regexp curfile 0)) then
-                 let s = Unix.stat fqp in
-                   begin
-                     match s.st_kind with
-                       | S_DIR ->
-                           this#new_dir slice_list fqp this#handle_dir_event;
-                           build_initial_tree fqp;
-                       | S_REG ->
-                           this#new_script slice_list fqp
-                       | _ ->
-                           printf "Don't know what to do with %s\n" curfile;flush Pervasives.stdout
-                   end
-           with 
-               _->cont:=false;()
+             let curfile = readdir dir_handle in
+               if (not (this#is_acl curfile)) then
+                 begin
+                   let fqp = String.concat "/" [dir;curfile] in
+                   let acl_fqp = String.concat "." [fqp;"acl"] in
+                   let acl_filter = this#make_filter acl_fqp in
+                   let slice_list = 
+                     match acl_filter with
+                       | None -> [] (*frontend_lst -> No ACL => No Show *)
+                       | Some(filter) -> List.filter 
+                                           (fun fe->Hashtbl.mem filter (fe#get_slice_name ())) 
+                                           frontend_lst 
+                   in
+                     if (Str.string_match file_regexp curfile 0) then
+                       let s = Unix.stat fqp in
+                         begin
+                           match s.st_kind with
+                             | S_DIR ->
+                                 this#new_dir slice_list fqp this#handle_dir_event;
+                                 build_initial_tree fqp;
+                             | S_REG ->
+                                 this#new_script slice_list fqp
+                             | _ ->
+                                 logprint "Don't know what to do with %s\n" curfile
+                         end
+                 end
+           with _
+           ->cont:=false;()
          done 
      in
        begin
          build_initial_tree dir_root;
-         Dirwatcher.add_watch dir_root [S_Create;S_Delete] (Some(this#handle_dir_event));
+         Dirwatcher.add_watch dir_root [S_Create;S_Delete] (this#handle_dir_event);
        end
    end

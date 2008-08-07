@@ -1,29 +1,56 @@
 #!/bin/bash
-# vsys initscript
-# Author: sapanb
+#
+# chkconfig: 345 84 02
+# description: Vsys file descriptor abritrator startup.
+#
+# Sapan Bhatia <sapanb@cs.princeton.edu>
+#
+# $Id$
+# $HeadURL$
+#
+name="vsys"
 
-backend="/vsys"
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+if [ -f /etc/sysconfig/$name ]; then
+    . /etc/sysconfig/$name
+fi
+
+backend=${BACKEND-/vsys}
+
+conf=${CONF-/etc/$name.conf}
+pidfile=${PIDFILE-/var/run/$name.pid}
+lockfile=${LOCKFILE-/var/lock/subsys/$name}
+RETVAL=0
+
+vsys=${VSYS- "/usr/bin/vsys -failsafe -backend $backend -conffile $conf -daemon"}
 
 case "$1" in
     start)
-        echo -n "Starting vsys:"
+        echo -n "Starting $name:"
         if [ ! -d $backend ]; then mkdir $backend; fi
-        find /vservers -maxdepth 1 -type d | perl -e 'while (<>) {if (/(\/vservers\/(.*_.*))/) {$dir=$1;if (not (-d "$dir/vsys")) {mkdir "$dir/vsys";}}}'
-        frontends=`find /vservers -maxdepth 1 -type d | perl -e 'while (<>) {if (/(\/vservers\/(.*_.*))/) {$dir=$1;$slice=$2;printf "-frontend $dir/vsys $slice "}}'`
-        vsys_command="/usr/bin/vsys -backend $backend $frontends"
-        echo $vsys_command
-        $vsys_command
+        daemon --check=vsys $vsys 
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && touch ${lockfile}
         ;;
     stop)
-        echo -n "Stopping $prog:"
-        killall vsys
-        exit 0
+        echo -n "Stopping $name:"
+        killproc $name
+        #killproc $name - Why were there 2 instances of this? :-|
+        RETVAL=$?
+        echo
+        [ $RETVAL -eq 0 ] && rm -f ${lockfile} ${pidfile}
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        RETVAL=$?
         ;;
     *)
-        echo $"Usage: $0 {start|stop}"
+        echo $"Usage: $0 {start|stop|restart}"
         exit 1
         ;;
 esac
 
-# Source function library.
-. /etc/rc.d/init.d/functions

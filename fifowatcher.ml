@@ -5,20 +5,22 @@ open Unix
 open Globals
 open Dirwatcher
 open Printf
+open Splice
 
 (** A connected process, FIFO *)
-type channel_pipe = Process of out_channel | Fifo of out_channel | BrokenPipe
-(** Signed file descriptors. Usually, we'll make sure that they're not
-  mistreated *)
+type channel_pipe = Process of Unix.file_descr | Fifo of Unix.file_descr | BrokenPipe
+
+(** Signed file descriptors. *)
 type signed_fd = Infd of Unix.file_descr | Outfd of Unix.file_descr | Eventfd of Unix.file_descr
 
+(** XXX This will get deprecated when we switch to inotify *)                                                                                  
 let fdmap: (Unix.file_descr,string*string) Hashtbl.t = Hashtbl.create 1024
+
 (** Maps pids to slice connections. Needed to clean up fds when a script dies
   with EPIPE *)
 let pidmap: (int,signed_fd list) Hashtbl.t = Hashtbl.create 1024
 let backend_prefix = ref ""
 let open_fds: (Unix.file_descr,channel_pipe) Hashtbl.t = Hashtbl.create 1024
-
 
 (** Receive an event from a running script. This event must be relayed to the
   slice that invoked it.
@@ -29,32 +31,31 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
   let (_,ifd) = idesc in
   let cp = try Hashtbl.find open_fds ifd with
       Not_found->
-        printf "Fifo fd disappeared\n";flush Pervasives.stdout;raise Bug
+        fprintf logfd "Fifo fd disappeared\n";flush logfd;raise Bug
   in
     match (cp) with 
-      | Fifo(fifo_outchan) ->
-          let process_inchan = in_channel_of_descr ifd in
-          let cont = ref true in
-            while (!cont) do
-              try 
-                let curline = input_line process_inchan in
-                  fprintf fifo_outchan "%s\n" curline;flush fifo_outchan
-              with 
-                | End_of_file|Sys_blocked_io|Unix_error(EPIPE,_,_)|Unix_error(EBADF,_,_) ->
-                    begin
-                      cont:=false
-                    end
-                | Unix_error(_,s1,s2) -> printf "Unix error %s - %s\n" s1 s2;flush Pervasives.stdout;cont:=false
-                | Sys_error(s) -> (* We get this error if the EPIPE comes before the EOF marker*) cont:=false
-                | e -> printf "Error - received unexpected event from file system !!!\n";raise e
-            done
-      | _ -> printf "Bug! Process fd received in the channel handler\n";flush Pervasives.stdout;raise Bug
-
+      | Fifo(fifo_outfd) ->
+          begin
+            try
+              printf "Received process event\n";flush Pervasives.stdout;
+              (* transferred = 4096 => there were at least 4096 bytes in the
+               * stream, so we should try again.
+               * transferred < 4096 => EAGAIN => either this is all the data we
+               * have (move on)
+               * OR XXX the receiver is blocking (supposedly this can't happen) *)
+              let transferred = ref 4096 in
+                while (!transferred == 4096) do 
+                  transferred:=tee ifd fifo_outfd 4096
+                done;
+            with 
+                Failure(s)->fprintf logfd "Transfer failure: %s\n" s;flush logfd
+          end
+      | _ -> fprintf logfd "Bug! Process fd received in the channel handler\n";flush logfd;raise Bug
 
 let rec openentry_int fifoin fifoout (abspath:string*string) =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
-        e->printf "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;flush Pervasives.stdout;raise e
+        e->fprintf logfd "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;flush logfd;raise e
   in
     Hashtbl.replace fdmap fdin abspath;
     Fdwatcher.add_fd (Some(fifoin),fdin) (Some(fifoout),stdout) receive_fifo_event
@@ -62,9 +63,10 @@ and reopenentry_int fdin fifoin fifoout =
   close fdin;
     Fdwatcher.del_fd fdin;
     let abspath = try 
-      Hashtbl.find fdmap fdin with _ -> printf "Bug: Phantom pipe\n";flush Pervasives.stdout;raise Bug
+      Hashtbl.find fdmap fdin with _ -> fprintf logfd "Bug: Phantom pipe\n";flush logfd;raise Bug
     in
       openentry_int fifoin fifoout abspath
+
 (** receive an event from a fifo and connect to the corresponding service, or to
   create it if it doesn't exit 
   @param eventdescriptor Name of input pipe,in descriptor
@@ -79,9 +81,9 @@ and receive_fifo_event eventdescriptor outdescriptor =
       | Some(str)->
           (
             try openfile str [O_WRONLY;O_NONBLOCK] 0o777 with
-                _->printf "Output pipe not open, using stdout in place of %s\n" str;flush Pervasives.stdout;stdout
+                _->fprintf logfd "Output pipe not open, using stdout in place of %s\n" str;flush logfd;stdout
           )
-      | None-> printf "Bug, nameless pipe\n";flush Pervasives.stdout;raise Bug
+      | None-> fprintf logfd "Bug, nameless pipe\n";flush logfd;raise Bug
   in
   (* Check if the input descriptor is already registered (=> a session is open).
    If not, register it and start a new session.*)
@@ -92,7 +94,8 @@ and receive_fifo_event eventdescriptor outdescriptor =
         let (script_infd,pout) = Unix.pipe () in
         let (pin,script_outfd) = Unix.pipe () in
           set_nonblock script_infd;
-          let rpid = try Some(create_process execpath [|execpath;slice_name|] pin pout pout) with e -> printf "Error executing service: %s\n" execpath;flush Pervasives.stdout;None
+          ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
+          let rpid = try Some(create_process execpath [|execpath;slice_name|] pin pout pout) with e -> fprintf logfd "Error executing service: %s\n" execpath;flush logfd;None
           in
             match rpid with
               | None-> BrokenPipe
@@ -102,52 +105,45 @@ and receive_fifo_event eventdescriptor outdescriptor =
                   Hashtbl.add pidmap pid [Infd(script_infd);Outfd(script_outfd);Eventfd(evfd)];
 
                   (* Connect pipe to running script *)
-                  Hashtbl.add open_fds evfd (Process(out_channel_of_descr script_outfd));
+                  Hashtbl.add open_fds evfd (Process(script_outfd));
 
                   (* Connect the running script to the pipe *)
-                  Hashtbl.add open_fds script_infd (Fifo(out_channel_of_descr outfd));
+                  Hashtbl.add open_fds script_infd (Fifo(outfd));
 
                   (* Activate running script *)
                   Fdwatcher.add_fd (None,script_infd) (None,script_infd) receive_process_event;
 
-                  (Process(out_channel_of_descr script_outfd))
+                  (Process(script_outfd))
   in
-  (* We have the connection to the process - because it was open, or because it
-   just got established *)
-  let inchan_fd = in_channel_of_descr evfd in
+    (* We have the connection to the process - because it was open, or because it
+     just got established *)
     match (pipe) with
-      | Process(out_channel) -> 
-          let cont = ref true in
-            while (!cont) do
-              try 
-                printf "Reading...\n";flush Pervasives.stdout;
-                let curline = input_line inchan_fd in
-                  fprintf out_channel "%s\n" curline;flush out_channel 
-              with 
-                |End_of_file->
-                    (
-                      match (evfname,fname_other) with
-                        | Some(str1),Some(str2)->
-                            printf "Reopening entry\n";flush Pervasives.stdout;
-                            reopenentry_int evfd str1 str2
-                        | Some(str1),None ->
-                            printf "Bug, nameless pipe\n";flush Pervasives.stdout;raise Bug
-                        | None,_ ->
-                            printf "Race condition -> user deleted file before closing it. Clever ploy, but won't work.\n";
-                            flush Pervasives.stdout
-                    );
-                    cont:=false
-                |Sys_blocked_io ->printf "Sysblockedio\n";flush Pervasives.stdout;
-                                  cont:=false
-                | _ ->printf "Bug: unhandled exception\n";flush Pervasives.stdout;raise Bug
-            done
+      | Process(fifo_outfd) -> 
+          begin
+            try
+              let transferred = ref 4096 in
+                while (!transferred == 4096) do
+                  begin
+                  transferred:=tee evfd fifo_outfd 4096;
+                                 printf "Transferred: %d\n" !transferred;flush Pervasives.stdout
+                  end
+                done;
+            with Failure(str) ->
+              begin
+                fprintf logfd "Error connecting user to service: %s\n" str;
+                flush logfd
+              end;
+              ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
+                                 printf "Out of the loop\n";flush Pervasives.stdout
+
+          end
       | BrokenPipe -> ()
-      | Fifo(_) -> printf "BUG! received process event from fifo\n";raise Bug
+      | Fifo(_) -> fprintf logfd "BUG! received process event from fifo\n";raise Bug
 
 
 (** Make a pair of fifo entries *)
 let mkentry fqp abspath perm uname = 
-  printf "Making entry %s->%s\n" fqp abspath;flush Pervasives.stdout;
+  fprintf logfd "Making entry %s->%s\n" fqp abspath;flush logfd;
   let fifoin=sprintf "%s.in" fqp in
   let fifoout=sprintf "%s.out" fqp in
     (try Unix.unlink fifoin with _ -> ());
@@ -158,14 +154,14 @@ let mkentry fqp abspath perm uname =
          Unix.mkfifo infname 0o666;
          Unix.mkfifo outfname 0o666;
          ( (* Make the user the owner of the pipes in a non-chroot environment *)
-         if (!Globals.nochroot) then
-           let pwentry = Unix.getpwnam uname in
-             Unix.chown infname pwentry.pw_uid pwentry.pw_gid; 
-             Unix.chown outfname pwentry.pw_uid pwentry.pw_gid
+           if (!Globals.nochroot) then
+             let pwentry = Unix.getpwnam uname in
+               Unix.chown infname pwentry.pw_uid pwentry.pw_gid; 
+               Unix.chown outfname pwentry.pw_uid pwentry.pw_gid
          );
          Success
      with 
-         e->printf "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush Pervasives.stdout;Failed)
+         e->fprintf logfd "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush logfd;Failed)
 
 (** Open fifos for a session. Will shutdown vsys if the fifos don't exist *)
 let openentry fqp abspath perm =
