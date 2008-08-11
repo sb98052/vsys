@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 19
+%define taglevel 20
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Mon Aug 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-20
+- trying to fix the taglevel relative to the branch name
+
 * Thu Jul 17 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-18
 - Change for someone at Imperial.ac.uk, who wants access to Netflow data.
 
