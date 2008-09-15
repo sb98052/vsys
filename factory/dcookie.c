@@ -20,7 +20,7 @@ int lookup_dcookie(uint64_t cookie, char * buf, size_t size)
 
 int main(int argc,char *argv[]) {
 		/* fs/dcookie.c uses PAGE_SIZE */
-		char path_buf[PAGE_SIZE],dcookie_buf[sizeof(INT64_MAXSZ)];
+		char path_buf[16384],dcookie_buf[sizeof(INT64_MAXSZ)];
 
 		/* In case nothing happens */
 		path_buf[0]='\0';
