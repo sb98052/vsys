@@ -4,7 +4,7 @@
 #define __NR_LOOKUP_DCOOKIE 253
 
 #include <sys/syscall.h>
-#include <asm/page.h>
+/*#include <asm/page.h>*/
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
