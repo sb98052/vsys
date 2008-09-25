@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 20
+%define taglevel 21
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Thu Sep 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-21
+- includes new portsummary script for CoMon
+
 * Mon Aug 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-20
 - trying to fix the taglevel relative to the branch name
 
