@@ -6,7 +6,16 @@ SLICE=$1
 SLICEID=`id -u $SLICE`
 read INDEX
 read REMOTE
-read KEY
+
+KEYFILE="/etc/vini/egre-keys.txt"
+if [ -e "$KEYFILE" ]; then
+    KEY=$( awk -v slice=$SLICE '$1 == slice {print $2}' $KEYFILE )
+fi
+if [ -z "$KEY" ]; then
+    echo "No EGRE key found for slice $SLICE!"
+    echo "Please send mail to vini-users@lists.planet-lab.org."
+    exit 1
+fi
 
 LINK=${KEY}if${INDEX}
 
