@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 21
+%define taglevel 22
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Tue Sep 30 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-22
+- Tagging a trivial fix.
+
 * Thu Sep 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-21
 - includes new portsummary script for CoMon
 
