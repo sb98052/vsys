@@ -41,7 +41,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
 
      (** Regular expression that defines a legal script name. Filter out
        * temporary files using it *)
-     val file_regexp = Str.regexp "^[a-zA-Z][a-zA-Z0-9_\.\-]*$"
+     val file_regexp = Str.regexp "^[a-zA-Z][a-zA-Z0-9_'.''-']*$"
      val acl_file_regexp = Str.regexp ".*acl$"
 
      (** Somebody created a new directory *)
@@ -84,7 +84,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
        with _ ->
          None
 
-     method is_acl fname = Str.string_match acl_file_regexp fname 0
+     method is_acl fname = Str.string_match acl_file_regexp fname 1
 
      (** Gets called every time there's an inotify event at the backend 
        @param dirname Name of the backend directory
