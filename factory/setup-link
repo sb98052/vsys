@@ -24,7 +24,7 @@ modprobe etun
 
 ### Setup EGRE tunnel
 EGRE=d$LINK
-$IP tunnel add $EGRE  mode gre/eth remote $REMOTE key $KEY
+$IP tunnel add $EGRE  mode gre/eth remote $REMOTE key $KEY ttl 64
 $IP link set $EGRE up
 
 ### Setup etun
