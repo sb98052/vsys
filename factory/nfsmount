@@ -5,6 +5,8 @@ use strict;
 my $slicename=$ARGV[0];
 my $already_mounted_testfile = "/tmp/$slicename"."_nfsmounted";
 
+my $slice_dir="/vservers/$slicename/";
+
 if (-f $already_mounted_testfile) {
 	die("Sorry, only one successful NFS mount allowed per slice!");
 }
@@ -12,7 +14,10 @@ if (-f $already_mounted_testfile) {
 my $remotepath = <STDIN>;
 my $localpath = <STDIN>;
 chomp($localpath);
+chomp($remotepath);
 $localpath=~s/\.\.//g;
+
+$localpath=$slice_dir.$localpath;
 
 unless (-d $localpath) {
 	die("Localpath does not exist, please create it first.");
