@@ -33,3 +33,16 @@ if ($nfspath!~/^(((\.\.){1}\/)*|(\/){1})?(([a-zA-Z0-9]*)\/)*([a-zA-Z0-9]*)+$/) {
 	die("The remote path $nfspath does not seem to be right.");
 } 
 
+my $mntcmd;
+
+$mntcmd="/bin/mount $remotepath $localpath";
+system($mntcmd);
+
+if ($?) {
+    print "Mount failed: $?";
+}
+else {
+    open FIL, ">$already_mounted_testfile";
+    print FIL "$remotepath $localpath";
+    close FIL;
+}
