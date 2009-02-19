@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 22
+%define taglevel 23
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,8 @@ fi
 %postun
 
 %changelog
+* Thu Feb 19 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-23
+
 * Tue Sep 30 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-22
 - Tagging a trivial fix.
 
