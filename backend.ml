@@ -41,7 +41,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
 
      (** Regular expression that defines a legal script name. Filter out
        * temporary files using it *)
-     val file_regexp = Str.regexp "^[a-zA-Z][a-zA-Z0-9_'.''-']*$"
+     val file_regexp = Str.regexp "^[a-zA-Z][a-zA-Z0-9_\.\-]*$"
      val acl_file_regexp = Str.regexp ".*acl$"
 
      (** Somebody created a new directory *)
