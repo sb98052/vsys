@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 25
+%define taglevel 26
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Tue Feb 24 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-26
+- Tagging to force an update.
+
 * Fri Feb 20 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-25
 
 * Fri Feb 20 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-24
