@@ -1,4 +1,4 @@
-/var/log/netflow.log {
+/var/log/vsys {
     copytruncate
     compress
     daily
