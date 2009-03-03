@@ -1,4 +1,4 @@
-/var/log/vsys.log {
+/var/log/vsys {
     copytruncate
     compress
     daily
