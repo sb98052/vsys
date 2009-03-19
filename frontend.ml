@@ -10,8 +10,12 @@ open Directfifowatcher
   @param slice_name actual slice name - set with care, since the acl functionality refers to these names *)
 class frontendHandler (root_dir,slice_name) = 
 object(this)
-  method get_slice_name () = slice_name
 
+  (** regex indicating that the script passes fds around *)
+  val fd_regex = Str.regexp "^fd_"
+
+  method is_fd_passer fname = Str.string_match fd_regex fname 0
+  method get_slice_name () = slice_name
   (** A new script was copied into the backend, make a corresponding entry in
     the frontend.
     @param rp Relative path of the entry in the backend
@@ -22,10 +26,25 @@ object(this)
       match rp with Relpath(rel) ->
         let fqp = String.concat "/" [root_dir;rel] in
         let res = Directfifowatcher.mkentry fqp abspath realperm slice_name in
-          match res with 
-            | Success ->
-                Directfifowatcher.openentry root_dir fqp (abspath,slice_name)
-            | _ -> ()
+          begin
+            match res with 
+              | Success ->
+                  Directfifowatcher.openentry root_dir fqp (abspath,slice_name)
+              | _ -> 
+                  logprint "Could not create entry %s" abspath
+          end;
+          if (is_fd_passer rel) then
+            let res = Unixsocketwatcher.mkentry fqp abspath realperm slice_name in
+              begin
+                match res with
+                  | Success ->
+                      Unixsocketwatcher.openentry root_dir fqp (abspath, slice_name)
+                  | _ -> 
+                      logprint "Could not create entry %s" abspath
+              end
+
+
+
 
   (** A new directory was created at the backend, make a corresponding directory
     at the frontend. Refer to mkentry for parameters *)
