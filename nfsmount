@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+
+use strict;
+
+my $slicename=$ARGV[0];
+my $already_mounted_testfile = "/tmp/$slicename"."_nfsmounted";
+
+my $slice_dir="/vservers/$slicename/";
+
+if (-f $already_mounted_testfile) {
+	die("Sorry, only one successful NFS mount allowed per slice!");
+}
+
+my $remotepath = <STDIN>;
+my $localpath = <STDIN>;
+chomp($localpath);
+chomp($remotepath);
+$localpath=~s/\.\.//g;
+
+$localpath=$slice_dir.$localpath;
+
+unless (-d $localpath) {
+	die("Localpath does not exist, please create it first.");
+}
+
+my $hostexpr="(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)";
+my $pathexpr="\/?[\w\d]+\/[\w\d]*\/?";
+my $nfshost;
+my $nfspath;
+
+($nfshost,$nfspath)=split ':',$remotepath;
+
+if ($nfshost!~/(?=^.{1,254}$)(^(?:(?!\d+\.|-)[a-zA-Z0-9_\-]{1,63}(?<!-)\.?)+(?:[a-zA-Z]{2,})$)/) {
+	die("The hostname $nfshost does not seem to be right.");
+}
+
+if ($nfspath!~/^(((\.\.){1}\/)*|(\/){1})?(([a-zA-Z0-9]*)\/)*([a-zA-Z0-9]*)+$/) {
+	die("The remote path $nfspath does not seem to be right.");
+} 
+
+my $mntcmd="/bin/mount $remotepath $localpath";
+system($mntcmd);
+
+if ($?) {
+    print "Mount failed: $?";
+}
+else {
+    open FIL, ">$already_mounted_testfile";
+    print FIL "$remotepath $localpath";
+    close FIL;
+}
