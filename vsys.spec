@@ -9,8 +9,8 @@
 %define url $URL$
 
 %define name vsys
-%define version 0.8
-%define taglevel 0
+%define version 0.7
+%define taglevel 26
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -50,7 +50,7 @@ make
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 mkdir -p $RPM_BUILD_ROOT/vsys
-cp factory/exec/* $RPM_BUILD_ROOT/vsys
+cp factory/* $RPM_BUILD_ROOT/vsys
 cp vsys $RPM_BUILD_ROOT/usr/bin
 cp vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
 cp vsys.conf $RPM_BUILD_ROOT/etc
@@ -77,6 +77,24 @@ fi
 %postun
 
 %changelog
+* Tue Feb 24 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-26
+- Tagging to force an update.
+
+* Fri Feb 20 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-25
+
+* Fri Feb 20 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-24
+
+* Thu Feb 19 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-23
+
+* Tue Sep 30 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-22
+- Tagging a trivial fix.
+
+* Thu Sep 25 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-21
+- includes new portsummary script for CoMon
+
+* Mon Aug 11 2008 Stephen Soltesz <soltesz@cs.princeton.edu> - vsys-0.7-20
+- trying to fix the taglevel relative to the branch name
+
 * Thu Jul 17 2008 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-18
 - Change for someone at Imperial.ac.uk, who wants access to Netflow data.
 
