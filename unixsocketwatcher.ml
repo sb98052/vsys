@@ -15,23 +15,11 @@ open Printf
 
 let close_if_open fd = (try (ignore(close fd);) with _ -> ())
 
-type in_pathname = string
-type directory = string
-type base_pathname = string
+type control_path_name = string
 type slice_name = string
 
-let unix_socket_table: (in_pathname,(directory*base_pathname*slice_name*Unix.file_descr) option) Hashtbl.t = 
+let unix_socket_table: (control_path_name,Unix.file_descr option) Hashtbl.t = 
   Hashtbl.create 1024
-
-let pidmap: (int,in_pathname * Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
-
-let move_gate fname =
-  let tmpfname=String.concat "." [fname;"tmp"] in 
-    Unix.rename fname tmpfname;
-    tmpfname
-
-let move_ungate fname restore =
-  Unix.rename restore fname
 
 let list_check lst elt _ =
   let rec list_check_rec lst = 
@@ -125,21 +113,12 @@ let mkentry fqp abspath perm uname =
 (** Close fifos that just got removed *)
 let closeentry fqp =
   let control_filename = String.concat "." [fqp;"control"] in
-  let entry = try Hashtbl.find direct_fifo_table fqp_in with Not_found -> None in
+  let entry = try Hashtbl.find direct_fifo_table control_filename with Not_found -> None in
     match entry with
       | None -> ()
       | Some(_,_,_,fd) -> 
-          close_if_open fd;
-          Hashtbl.remove direct_fifo_table fqp_in
-
-let sigchld_handle s =
-  let pid,_=Unix.waitpid [Unix.WNOHANG] 0 in
-    try
-      let fqp_in,fd_out = Hashtbl.find pidmap pid in
-        begin
-          reopenentry fqp_in
-        end
-    with _ -> ()
+          shutdown fd SHUTDOWN_ALL;
+          close_if_open fd
 
 let rec add_dir_watch fqp =
   Dirwatcher.add_watch fqp [S_Open] direct_fifo_handler

@@ -14,9 +14,9 @@ fifowatcher.cmo: splice.cmo inotify.cmi globals.cmo fdwatcher.cmo \
     dirwatcher.cmo 
 fifowatcher.cmx: splice.cmx inotify.cmi globals.cmx fdwatcher.cmx \
     dirwatcher.cmx 
-frontend.cmo: globals.cmo directfifowatcher.cmo 
-frontend.cmx: globals.cmx directfifowatcher.cmx 
-main.cmo: inotify.cmi globals.cmo frontend.cmo fifowatcher.cmo fdwatcher.cmo \
-    dirwatcher.cmo conffile.cmo backend.cmo 
-main.cmx: inotify.cmi globals.cmx frontend.cmx fifowatcher.cmx fdwatcher.cmx \
-    dirwatcher.cmx conffile.cmx backend.cmx 
+frontend.cmo: unixsocketwatcher.cmo globals.cmo directfifowatcher.cmo 
+frontend.cmx: unixsocketwatcher.cmx globals.cmx directfifowatcher.cmx 
+main.cmo: inotify.cmi globals.cmo frontend.cmo fdwatcher.cmo dirwatcher.cmo \
+    directfifowatcher.cmo conffile.cmo backend.cmo 
+main.cmx: inotify.cmi globals.cmx frontend.cmx fdwatcher.cmx dirwatcher.cmx \
+    directfifowatcher.cmx conffile.cmx backend.cmx 

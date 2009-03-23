@@ -77,12 +77,25 @@ object(this)
       let fqp = String.concat "/" [root_dir;rel] in
       let fqp_in = String.concat "." [fqp;"in"] in
       let fqp_out = String.concat "." [fqp;"out"] in
-        Directfifowatcher.closeentry fqp;
-        try 
-          Unix.unlink fqp_in;
-          Unix.unlink fqp_out
-        with _ ->
-          logprint "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ())
+      let fqp_control = String.concat "." [fqp;"out"] in
+
+        if (this#is_fd_passer rel) then
+          begin
+            Unixsocketwatcher.closeentry fqp;
+            try 
+              Unix.unlink fqp_control
+            with _ ->
+              logprint "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ())
+          end
+        else
+          begin
+            Directfifowatcher.closeentry fqp;
+            try 
+              Unix.unlink fqp_in;
+              Unix.unlink fqp_out
+            with _ ->
+              logprint "Hm. %s disappeared. Looks like slice %s shot itself in the foot\n" fqp (this#get_slice_name ())
+          end
 
   method rmdir rp =
     match rp with Relpath(rel) ->
