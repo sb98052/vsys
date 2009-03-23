@@ -31,7 +31,7 @@ object(this)
               begin
                 match res with
                   | Success ->
-                      Unixsocketwatcher.openentry root_dir fqp (abspath, slice_name)
+                      ()
                   | _ -> 
                       logprint "Could not create entry %s" abspath
               end

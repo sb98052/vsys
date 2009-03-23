@@ -16,47 +16,42 @@ open Printf
 let close_if_open fd = (try (ignore(close fd);) with _ -> ())
 
 type control_path_name = string
+type exec_path_name = string
 type slice_name = string
 
-let unix_socket_table: (control_path_name,Unix.file_descr option) Hashtbl.t = 
+let unix_socket_table: (control_path_name,(exec_path_name*slice_name*Unix.file_descr) option) Hashtbl.t = 
   Hashtbl.create 1024
 
-let list_check lst elt _ =
-  let rec list_check_rec lst = 
-    match lst with
-      | [] -> false
-      | car::cdr -> 
-          if (car==elt) then
-               true
-          else
-            list_check_rec cdr
-  in
-    list_check_rec lst
+(** Make a pair of fifo entries *)
+let mkentry fqp exec_fqp perm uname = 
+  logprint "Making control entry %s->%s\n" fqp exec_fqp;
+  let control_filename=sprintf "%s.control" fqp in
+    try
+      let listening_socket = socket PF_UNIX SOCK_STREAM 0 in
+        (try Unix.unlink control_filename with _ -> ());
+        let socket_address = ADDR_UNIX(control_filename) in
+          bind listening_socket socket_address;
+          listen listening_socket 10;
+          ( (* Make the user the owner of the pipes in a non-chroot environment *)
+            if (!Globals.nochroot) then
+              let pwentry = Unix.getpwnam uname in
+                Unix.chown control_filename pwentry.pw_uid pwentry.pw_gid
+          );
+          Hashtbl.replace unix_socket_table control_file (Some(exec_fqp,slice_name,listening_socket));
+          Success
+    with 
+        e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;Failed
 
-let openentry_int fifoin =
-  let fdin =
-    try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
-        e->logprint "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;raise e
-  in
-    fdin
-
-(** Open entry safely, by first masking out the file to be opened *)
-let openentry_safe root_dir fqp_in backend_spec =
-  let restore = move_gate fqp_in in
-  let fd_in = openentry_int restore in
-    move_ungate fqp_in restore;
-    let (fqp,slice_name) = backend_spec in
-      Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
-
-let openentry root_dir fqp backend_spec =
-  let control_file = String.concat "." [fqp;"control"] in
-    openentry_safe root_dir fqp_in backend_spec
-
-let reopenentry fifoin =
-  let entry = try Hashtbl.find direct_fifo_table fifoin with _ -> None in
+(** Close sockets that just got removed *)
+let closeentry fqp =
+  let control_filename = String.concat "." [fqp;"control"] in
+  let entry = try Hashtbl.find direct_fifo_table control_filename with Not_found -> None in
     match entry with
-      | Some(dir, fqp,slice_name,fd) -> close_if_open fd;openentry_safe dir fifoin (fqp,slice_name)
       | None -> ()
+      | Some(_,_,_,fd) -> 
+          shutdown fd SHUTDOWN_ALL;
+          close_if_open fd;
+          Hashtbl.remove unix_socket_table control_filename
 
 (* vsys is activated when a client opens an in file *)
 let connect_file fqp_in =
@@ -91,46 +86,7 @@ let connect_file fqp_in =
       | None -> ()
 
 
-(** Make a pair of fifo entries *)
-let mkentry fqp abspath perm uname = 
-  logprint "Making control entry %s->%s\n" fqp abspath;
-  let control_filename=sprintf "%s.control" fqp in
-    try
-      let listening_socket = socket PF_UNIX SOCK_STREAM 0 in
-        (try Unix.unlink control_filename with _ -> ());
-        let socket_address = ADDR_UNIX(control_filename) in
-          bind listening_socket socket_address;
-          ( (* Make the user the owner of the pipes in a non-chroot environment *)
-            if (!Globals.nochroot) then
-              let pwentry = Unix.getpwnam uname in
-                Unix.chown control_filename pwentry.pw_uid pwentry.pw_gid
-          );
-          Success
-    with 
-        e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;Failed)
 
-
-(** Close fifos that just got removed *)
-let closeentry fqp =
-  let control_filename = String.concat "." [fqp;"control"] in
-  let entry = try Hashtbl.find direct_fifo_table control_filename with Not_found -> None in
-    match entry with
-      | None -> ()
-      | Some(_,_,_,fd) -> 
-          shutdown fd SHUTDOWN_ALL;
-          close_if_open fd
-
-let rec add_dir_watch fqp =
-  Dirwatcher.add_watch fqp [S_Open] direct_fifo_handler
-and
-    direct_fifo_handler wd dirname evlist fname =
-  let is_event = list_check evlist in
-    if (is_event Open Attrib) then 
-      let fqp_in = String.concat "/" [dirname;fname] in
-        connect_file fqp_in
-
-let del_dir_watch fqp =
-  ()
 
 let initialize () =
-  Sys.set_signal Sys.sigchld (Sys.Signal_handle sigchld_handle)
+  ()
