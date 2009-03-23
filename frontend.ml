@@ -4,6 +4,7 @@ open Printf
 open Unix
 open Globals
 open Directfifowatcher
+open Unixsocketwatcher
 
 (** frontendhandler class: Methods to create and unlink pipes and directories 
   @param root_dir vsys directory inside a slice
@@ -25,7 +26,7 @@ object(this)
     let realperm = perm land (lnot 0o111) in
       match rp with Relpath(rel) ->
         let fqp = String.concat "/" [root_dir;rel] in
-          if (is_fd_passer rel) then
+          if (this#is_fd_passer rel) then
             let res = Unixsocketwatcher.mkentry fqp abspath realperm slice_name in
               begin
                 match res with
