@@ -22,6 +22,34 @@ type slice_name = string
 let unix_socket_table: (control_path_name,(exec_path_name*slice_name*Unix.file_descr) option) Hashtbl.t = 
   Hashtbl.create 1024
 
+let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
+    let (_,listening_socket) = listening_socket_spec in
+  try 
+    let (data_socket, addr) = accept listening_socket in
+      match addr with 
+        | ADDR_UNIX(fname) ->
+            begin
+              let entry_info = 
+                try
+                  Hashtbl.find unix_socket_table fname 
+                with _ -> logprint "Received unexpected socket event from %s\n" fname;None in
+                match entry_info with
+                  | Some(execpath,slice_name,fd) ->
+                      begin
+                        let child = fork () in
+                          if (child == 0) then
+                               begin
+                                 (*Child*)
+                                 (* Close all fds except for the socket *)
+                                 ignore(execv execpath,[execpath]);
+                                 logprint "Could not execve %s" execpath
+                               end
+                      end
+                  | None -> ()
+            end
+        | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
+  with e-> logprint "Error accepting socket\n"
+
 (** Make a pair of fifo entries *)
 let mkentry fqp exec_fqp perm slice_name = 
   logprint "Making control entry %s->%s\n" fqp exec_fqp;
@@ -38,38 +66,11 @@ let mkentry fqp exec_fqp perm slice_name =
                 Unix.chown control_filename pwentry.pw_uid pwentry.pw_gid
           );
           Hashtbl.replace unix_socket_table control_filename (Some(exec_fqp,slice_name,listening_socket));
+          Fdwatcher.add_fd (None,listening_socket) (None,listening_socket) receive_event;
           Success
     with 
         e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp exec_fqp;Failed
 
-let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
-  print "Here\n";
-    let (_,listening_socket) = listening_socket_spec in
-  try 
-    let (data_socket, addr) = accept listening_socket in
-      match addr with 
-        | ADDR_UNIX(fname) ->
-            begin
-              let entry_info = 
-                try
-                  Hashtbl.find unix_socket_table fname 
-                with _ -> None in
-                match entry_info with
-                  | Some(execpath,slice_name,fd) ->
-                      begin
-                        let child = fork () in
-                          if (child == 0) then
-                               begin
-                                 (*Child*)
-                                 (* Close all fds except for the socket *)
-                                 execv execpath,[execpath];
-                                 logprint "Could not execve %s" execpath
-                               end
-                      end
-                  | None -> ()
-            end
-        | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
-  with e-> logprint "Error accepting socket\n"
   
 (** Close sockets that just got removed *)
 let closeentry fqp =
@@ -80,10 +81,7 @@ let closeentry fqp =
       | Some(_,_,fd) -> 
           shutdown fd SHUTDOWN_ALL;
           close_if_open fd;
-          Fdwatcher.add_fd (None,fd) (None,fd) receive_event;
           Hashtbl.remove unix_socket_table control_filename
-
-
 
 
 
