@@ -19,36 +19,35 @@ type control_path_name = string
 type exec_path_name = string
 type slice_name = string
 
-let unix_socket_table: (control_path_name,(exec_path_name*slice_name*Unix.file_descr) option) Hashtbl.t = 
+let unix_socket_table_fname: (control_path_name,Unix.file_descr option) Hashtbl.t = 
+  Hashtbl.create 1024
+
+let unix_socket_table_fd: (Unix.file_descr, (exec_path_name * slice_name) option) Hashtbl.t =
   Hashtbl.create 1024
 
 let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
-    let (_,listening_socket) = listening_socket_spec in
-  try 
-    let (data_socket, addr) = accept listening_socket in
-      match addr with 
-        | ADDR_UNIX(fname) ->
-            begin
-              let entry_info = 
-                try
-                  Hashtbl.find unix_socket_table fname 
-                with _ -> logprint "Received unexpected socket event from %s\n" fname;None in
-                match entry_info with
-                  | Some(execpath,slice_name,fd) ->
-                      begin
-                        let child = fork () in
-                          if (child == 0) then
-                               begin
-                                 (*Child*)
-                                 (* Close all fds except for the socket *)
-                                 ignore(execv execpath,[execpath]);
-                                 logprint "Could not execve %s" execpath
-                               end
-                      end
-                  | None -> ()
-            end
-        | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
-  with e-> logprint "Error accepting socket\n"
+  let (_,listening_socket) = listening_socket_spec in
+    try 
+      let (data_socket, _) = accept listening_socket in
+      let (mapping) = 
+        try
+          Hashtbl.find unix_socket_table_fd listening_socket
+        with _ -> None in
+        match mapping with
+          |None -> logprint "Received unexpected socket event\n";()
+          |Some (execpath, slice_name) ->
+              begin
+                let child = fork () in
+                  if (child == 0) then
+                    begin
+                      (*Child*)
+                      (* Close all fds except for the socket *)
+                      ignore(execv execpath,[execpath,sprintf "%d" data_socket]);
+                      logprint "Could not execve %s" execpath
+                    end
+              end
+          | None -> ()
+    with e-> logprint "Error accepting socket\n"
 
 (** Make a pair of fifo entries *)
 let mkentry fqp exec_fqp perm slice_name = 
@@ -65,7 +64,8 @@ let mkentry fqp exec_fqp perm slice_name =
               let pwentry = Unix.getpwnam slice_name in
                 Unix.chown control_filename pwentry.pw_uid pwentry.pw_gid
           );
-          Hashtbl.replace unix_socket_table control_filename (Some(exec_fqp,slice_name,listening_socket));
+          Hashtbl.replace unix_socket_table_fname control_filename (Some(listening_socket));
+          Hashtbl.replace unix_socket_table_fd listening_socket Some(control_filename,slice_name);
           Fdwatcher.add_fd (None,listening_socket) (None,listening_socket) receive_event;
           Success
     with 
@@ -75,10 +75,11 @@ let mkentry fqp exec_fqp perm slice_name =
 (** Close sockets that just got removed *)
 let closeentry fqp =
   let control_filename = String.concat "." [fqp;"control"] in
-  let entry = try Hashtbl.find unix_socket_table control_filename with Not_found -> None in
+  let entry = try Hashtbl.find unix_socket_table_fname Some(control_filename) with Not_found -> None in
     match entry with
       | None -> ()
-      | Some(_,_,fd) -> 
+      | Some(fd) -> 
+          Hashtbl.remove unix_socket_table fd;
           shutdown fd SHUTDOWN_ALL;
           close_if_open fd;
           Hashtbl.remove unix_socket_table control_filename
