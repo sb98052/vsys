@@ -43,6 +43,7 @@ let mkentry fqp exec_fqp perm slice_name =
         e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp exec_fqp;Failed
 
 let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
+  print "Here\n";
     let (_,listening_socket) = listening_socket_spec in
   try 
     let (data_socket, addr) = accept listening_socket in
