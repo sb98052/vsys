@@ -13,7 +13,7 @@ class frontendHandler (root_dir,slice_name) =
 object(this)
 
   (** regex indicating that the script passes fds around *)
-  val fd_regex = Str.regexp "^fd_"
+  val fd_regex = Str.regexp "fd_"
 
   method is_fd_passer fname = Str.string_match fd_regex fname 0
   method get_slice_name () = slice_name
