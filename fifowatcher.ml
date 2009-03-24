@@ -31,7 +31,7 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
   let (_,ifd) = idesc in
   let cp = try Hashtbl.find open_fds ifd with
       Not_found->
-        fprintf logfd "Fifo fd disappeared\n";flush logfd;raise Bug
+        logprint "Fifo fd disappeared\n";raise Bug
   in
     match (cp) with 
       | Fifo(fifo_outfd) ->
@@ -48,14 +48,14 @@ let receive_process_event (idesc: fname_and_fd) (_: fname_and_fd) =
                   transferred:=tee ifd fifo_outfd 4096
                 done;
             with 
-                Failure(s)->fprintf logfd "Transfer failure: %s\n" s;flush logfd
+                Failure(s)->logprint "Transfer failure: %s\n" s
           end
-      | _ -> fprintf logfd "Bug! Process fd received in the channel handler\n";flush logfd;raise Bug
+      | _ -> logprint "Bug! Process fd received in the channel handler\n";raise Bug
 
 let rec openentry_int fifoin fifoout (abspath:string*string) =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
-        e->fprintf logfd "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;flush logfd;raise e
+        e->logprint "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;raise e
   in
     Hashtbl.replace fdmap fdin abspath;
     Fdwatcher.add_fd (Some(fifoin),fdin) (Some(fifoout),stdout) receive_fifo_event
@@ -63,7 +63,7 @@ and reopenentry_int fdin fifoin fifoout =
   close fdin;
     Fdwatcher.del_fd fdin;
     let abspath = try 
-      Hashtbl.find fdmap fdin with _ -> fprintf logfd "Bug: Phantom pipe\n";flush logfd;raise Bug
+      Hashtbl.find fdmap fdin with _ -> logprint "Bug: Phantom pipe\n";raise Bug
     in
       openentry_int fifoin fifoout abspath
 
@@ -81,9 +81,9 @@ and receive_fifo_event eventdescriptor outdescriptor =
       | Some(str)->
           (
             try openfile str [O_WRONLY;O_NONBLOCK] 0o777 with
-                _->fprintf logfd "Output pipe not open, using stdout in place of %s\n" str;flush logfd;stdout
+                _->logprint "Output pipe not open, using stdout in place of %s\n" str;stdout
           )
-      | None-> fprintf logfd "Bug, nameless pipe\n";flush logfd;raise Bug
+      | None-> logprint "Bug, nameless pipe\n";raise Bug
   in
   (* Check if the input descriptor is already registered (=> a session is open).
    If not, register it and start a new session.*)
@@ -95,7 +95,7 @@ and receive_fifo_event eventdescriptor outdescriptor =
         let (pin,script_outfd) = Unix.pipe () in
           set_nonblock script_infd;
           ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
-          let rpid = try Some(create_process execpath [|execpath;slice_name|] pin pout pout) with e -> fprintf logfd "Error executing service: %s\n" execpath;flush logfd;None
+          let rpid = try Some(create_process execpath [|execpath;slice_name|] pin pout pout) with e -> logprint "Error executing service: %s\n" execpath;None
           in
             match rpid with
               | None-> BrokenPipe
@@ -130,20 +130,19 @@ and receive_fifo_event eventdescriptor outdescriptor =
                 done;
             with Failure(str) ->
               begin
-                fprintf logfd "Error connecting user to service: %s\n" str;
-                flush logfd
+                logprint "Error connecting user to service: %s\n" str
               end;
               ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
                                  printf "Out of the loop\n";flush Pervasives.stdout
 
           end
       | BrokenPipe -> ()
-      | Fifo(_) -> fprintf logfd "BUG! received process event from fifo\n";raise Bug
+      | Fifo(_) -> logprint "BUG! received process event from fifo\n";raise Bug
 
 
 (** Make a pair of fifo entries *)
 let mkentry fqp abspath perm uname = 
-  fprintf logfd "Making entry %s->%s\n" fqp abspath;flush logfd;
+  logprint "Making entry %s->%s\n" fqp abspath;
   let fifoin=sprintf "%s.in" fqp in
   let fifoout=sprintf "%s.out" fqp in
     (try Unix.unlink fifoin with _ -> ());
@@ -161,7 +160,7 @@ let mkentry fqp abspath perm uname =
          );
          Success
      with 
-         e->fprintf logfd "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;flush logfd;Failed)
+         e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp fifoout;Failed)
 
 (** Open fifos for a session. Will shutdown vsys if the fifos don't exist *)
 let openentry fqp abspath perm =

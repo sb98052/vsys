@@ -14,8 +14,7 @@ let add_fd (evpair:fname_and_fd) (fd_other:fname_and_fd) (callback:fname_and_fd-
     Hashtbl.replace cbtable fd (callback,(evpair,fd_other))
 
 let del_fd fd =
-  fdset:=List.filter (fun l->l<>fd) !fdset;
-  flush logfd
+  fdset:=List.filter (fun l->l<>fd) !fdset
 
 let start_watch () =
   while (true)

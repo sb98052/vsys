@@ -26,13 +26,14 @@ let cmdspeclist =
   ]
 
 let _ =
-  logprint "Starting Vsys v%s\n" Globals.vsys_version;
   print "Starting Vsys v%s\n" Globals.vsys_version;
   Arg.parse cmdspeclist (fun x->()) "Usage: vsys <list of mount points>";  
+  Globals.logfd:=open_out_gen [Open_append;Open_creat] 0o644 !log_filepath;
   if (!Globals.backend == "") then
     printf "Try vsys --help\n"
   else
     begin
+      logprint "Starting Vsys v%s\n" Globals.vsys_version;
       if (!daemonize) then
         begin
           print "Daemonizing\n";

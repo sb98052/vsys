@@ -131,7 +131,7 @@ class backendHandler dir_root (frontend_lst: frontendHandler list) =
                  end
            end
          else (* regex not matched *)
-           fprintf logfd "Rejected weird entry %s\n" fname
+           logprint "Rejected weird entry %s\n" fname
 
      (** Initializer - build the initial tree based on the contents of /vsys *)
      initializer 
