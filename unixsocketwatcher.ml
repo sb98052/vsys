@@ -44,6 +44,10 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                       (* Close all fds except for the socket *)
                       let fd = Obj.magic data_socket in
                         let _ = 
+                          (* Close fds *)
+                          for i = 3 to 1023 do
+                            if (i != fd) then close_if_open(i)
+                          done;
                             execv execpath [|execpath;slice_name;sprintf "%d" fd|] (*with
                                 Unix_error(num,str1,str2)->logprint "Error %d: %s (%s)" (Obj.magic num) str1 str2;raise (Unix_error(num,str1,str2))*)
                         in
