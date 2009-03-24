@@ -49,36 +49,22 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
     let (data_socket, addr) = accept listening_socket in
       match addr with 
         | ADDR_UNIX(fname) ->
-            let entry_info = try
-              Hashtbl.find unix_socket_watcher addr with _ -> None in
+            let entry_info = 
+              try
+                Hashtbl.find unix_socket_table fname 
+                with _ -> None in
               match entry_info with
-                | Some(_,execpath,slice_name,fd) ->
-                    begin
-                      let len = String.length fqp_in in
-                      let fqp = String.sub fqp_in 0 (len-3) in
-                      let fqp_out = String.concat "." [fqp;"out"] in
-                      let fifo_fdout =
-                        try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
-                            _-> (* The client is opening the descriptor too fast *)
-                              sleep 1;try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
-                                  _->
-                                    logprint "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;stdout
-                      in
-                        ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
-                        (
-                          clear_nonblock fifo_fdin;
-                          let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
-                            match pid with 
-                              | Some(pid) ->
-                                  if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
-                                  Hashtbl.add pidmap pid (fqp_in,fifo_fdout)
-                              | None ->logprint "Error executing service: %s\n" execpath;reopenentry fqp_in
-                        );
-                        ignore(sigprocmask SIG_UNBLOCK [Sys.sigchld]);
-                    end
-                | None -> ()
+                  begin
+                        | Some(_,execpath,slice_name,fd) ->
+                            begin
+
+
+
+                            end
+                        | None -> ()
+                  end
+                | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
   with e-> logprint "Error connecting service %s\n" execpath
-    | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
   
 (** Close sockets that just got removed *)
 let closeentry fqp =
