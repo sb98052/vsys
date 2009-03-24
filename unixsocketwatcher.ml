@@ -36,7 +36,6 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
         match mapping with
           |None -> logprint "Received unexpected socket event\n";()
           |Some (execpath, slice_name) ->
-              print "Execpath: %s\n" execpath;
               begin
                 let child = fork () in
                   if (child == 0) then
@@ -44,7 +43,6 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                       (* Child *)
                       (* Close all fds except for the socket *)
                       let fd = Obj.magic data_socket in
-                        print "Fd: %d\n" fd;
                         let _ = 
                             execv execpath [|execpath;slice_name;sprintf "%d" fd|] (*with
                                 Unix_error(num,str1,str2)->logprint "Error %d: %s (%s)" (Obj.magic num) str1 str2;raise (Unix_error(num,str1,str2))*)
