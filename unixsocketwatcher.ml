@@ -43,28 +43,27 @@ let mkentry fqp exec_fqp perm slice_name =
         e->logprint "Error creating FIFO: %s->%s. May be something wrong at the frontend.\n" fqp exec_fqp;Failed
 
 let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
-  (* Do we care about this file? *)
-  try 
     let (_,listening_socket) = listening_socket_spec in
+  try 
     let (data_socket, addr) = accept listening_socket in
       match addr with 
         | ADDR_UNIX(fname) ->
-            let entry_info = 
-              try
-                Hashtbl.find unix_socket_table fname 
+            begin
+              let entry_info = 
+                try
+                  Hashtbl.find unix_socket_table fname 
                 with _ -> None in
-              match entry_info with
-                  begin
-                        | Some(_,execpath,slice_name,fd) ->
-                            begin
+                match entry_info with
+                  | Some(execpath,slice_name,fd) ->
+                      begin
 
 
 
-                            end
-                        | None -> ()
-                  end
-                | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
-  with e-> logprint "Error connecting service %s\n" execpath
+                      end
+                  | None -> ()
+            end
+        | _ -> logprint "Serious error! Got a non UNIX connection over a UNIX socket\n"
+  with e-> logprint "Error accepting socket\n"
   
 (** Close sockets that just got removed *)
 let closeentry fqp =

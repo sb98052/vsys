@@ -20,3 +20,5 @@ main.cmo: inotify.cmi globals.cmo frontend.cmo fdwatcher.cmo dirwatcher.cmo \
     directfifowatcher.cmo conffile.cmo backend.cmo 
 main.cmx: inotify.cmi globals.cmx frontend.cmx fdwatcher.cmx dirwatcher.cmx \
     directfifowatcher.cmx conffile.cmx backend.cmx 
+unixsocketwatcher.cmo: globals.cmo fdwatcher.cmo 
+unixsocketwatcher.cmx: globals.cmx fdwatcher.cmx 

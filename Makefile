@@ -33,8 +33,8 @@ ocaml_inotify-0.4/inotify.cmxa:
 splice_stub.o: splice_stub.c
 	gcc -c -I /usr/lib/ocaml -I /usr/lib64/ocaml splice_stub.c -o splice_stub.o
 
-vsys: ocaml_inotify-0.4/inotify.cmxa globals.cmx fdwatcher.cmx conffile.cmx splice_stub.o splice.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx backend.cmx main.cmx docs 
-	ocamlopt -I ocaml_inotify-0.4 str.cmxa unix.cmxa inotify.cmxa globals.cmx fdwatcher.cmx dirwatcher.cmx splice.cmx splice_stub.o directfifowatcher.cmx frontend.cmx backend.cmx str.cmxa conffile.cmx main.cmx -o vsys
+vsys: ocaml_inotify-0.4/inotify.cmxa globals.cmx fdwatcher.cmx conffile.cmx splice_stub.o splice.cmx dirwatcher.cmx fifowatcher.cmx frontend.cmx unixsocketwatcher.cmx backend.cmx main.cmx docs 
+	ocamlopt -I ocaml_inotify-0.4 str.cmxa unix.cmxa inotify.cmxa globals.cmx fdwatcher.cmx dirwatcher.cmx splice.cmx splice_stub.o directfifowatcher.cmx frontend.cmx unixsocketwatcher.cmx backend.cmx str.cmxa conffile.cmx main.cmx -o vsys
 
 vsys.b: ocaml_inotify-0.4/inotify.cma inotify.cmi globals.ml fdwatcher.ml dirwatcher.ml directfifowatcher.ml frontend.ml backend.ml main.ml
 	ocamlc -g str.cma unix.cma ocaml_inotify-0.4/inotify.cma globals.cmo fdwatcher.cmo dirwatcher.cmo directfifowatcher.cmo frontend.cmo backend.cmo str.cma conffile.cmo main.cmo -o vsys.b
