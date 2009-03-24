@@ -42,7 +42,7 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                     begin
                       (*Child*)
                       (* Close all fds except for the socket *)
-                      ignore(execv execpath,[execpath,sprintf "%d" data_socket]);
+                      ignore(execv execpath,[execpath,sprintf "%d" (Obj.magic data_socket)]);
                       logprint "Could not execve %s" execpath
                     end
               end
@@ -65,7 +65,7 @@ let mkentry fqp exec_fqp perm slice_name =
                 Unix.chown control_filename pwentry.pw_uid pwentry.pw_gid
           );
           Hashtbl.replace unix_socket_table_fname control_filename (Some(listening_socket));
-          Hashtbl.replace unix_socket_table_fd listening_socket Some(control_filename,slice_name);
+          Hashtbl.replace unix_socket_table_fd listening_socket (Some(control_filename,slice_name));
           Fdwatcher.add_fd (None,listening_socket) (None,listening_socket) receive_event;
           Success
     with 
@@ -75,14 +75,14 @@ let mkentry fqp exec_fqp perm slice_name =
 (** Close sockets that just got removed *)
 let closeentry fqp =
   let control_filename = String.concat "." [fqp;"control"] in
-  let entry = try Hashtbl.find unix_socket_table_fname Some(control_filename) with Not_found -> None in
+  let entry = try Hashtbl.find unix_socket_table_fname control_filename with Not_found -> None in
     match entry with
       | None -> ()
       | Some(fd) -> 
-          Hashtbl.remove unix_socket_table fd;
+          Hashtbl.remove unix_socket_table_fd fd;
           shutdown fd SHUTDOWN_ALL;
           close_if_open fd;
-          Hashtbl.remove unix_socket_table control_filename
+          Hashtbl.remove unix_socket_table_fname control_filename
 
 
 
