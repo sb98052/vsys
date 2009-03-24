@@ -36,11 +36,12 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
         match mapping with
           |None -> logprint "Received unexpected socket event\n";()
           |Some (execpath, slice_name) ->
+              print "Execpath: %s\n" execpath;
               begin
                 let child = fork () in
                   if (child == 0) then
                     begin
-                      (*Child*)
+                      (* Child *)
                       (* Close all fds except for the socket *)
                       ignore(execv execpath,[execpath,sprintf "%d" (Obj.magic data_socket)]);
                       logprint "Could not execve %s" execpath
@@ -65,7 +66,7 @@ let mkentry fqp exec_fqp perm slice_name =
                 Unix.chown control_filename pwentry.pw_uid pwentry.pw_gid
           );
           Hashtbl.replace unix_socket_table_fname control_filename (Some(listening_socket));
-          Hashtbl.replace unix_socket_table_fd listening_socket (Some(control_filename,slice_name));
+          Hashtbl.replace unix_socket_table_fd listening_socket (Some(exec_fqp,slice_name));
           Fdwatcher.add_fd (None,listening_socket) (None,listening_socket) receive_event;
           Success
     with 
