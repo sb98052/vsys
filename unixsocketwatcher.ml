@@ -56,9 +56,14 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                 match entry_info with
                   | Some(execpath,slice_name,fd) ->
                       begin
-
-
-
+                        let child = fork () in
+                          if (child == 0) then
+                               begin
+                                 (*Child*)
+                                 (* Close all fds except for the socket *)
+                                 execv execpath,[execpath];
+                                 logprint "Could not execve %s" execpath
+                               end
                       end
                   | None -> ()
             end

@@ -15,6 +15,7 @@ let cmdspeclist =
   [
     ("-daemon",Arg.Set(daemonize), "Daemonize");
     ("-conffile",Arg.Set_string(Globals.conffile), "Config file");
+    ("-logfile",Arg.Set_string(Globals.log_filepath), "Log file");
     ("-backend",Arg.Set_string(Globals.backend), "Backend directory");
     ("-frontend",Arg.Tuple[Arg.String(fun s->cur_dir:=s);
                            Arg.String(fun s->cur_slice:=s;
