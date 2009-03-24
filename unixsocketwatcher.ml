@@ -43,8 +43,13 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                     begin
                       (* Child *)
                       (* Close all fds except for the socket *)
-                      ignore(execv execpath,[execpath,sprintf "%d" (Obj.magic data_socket)]);
-                      logprint "Could not execve %s" execpath
+                      let fd = Obj.magic data_socket in
+                        print "Fd: %d\n" fd;
+                        let _ = 
+                            execv execpath [|execpath;slice_name;sprintf "%d" fd|] (*with
+                                Unix_error(num,str1,str2)->logprint "Error %d: %s (%s)" (Obj.magic num) str1 str2;raise (Unix_error(num,str1,str2))*)
+                        in
+                            logprint "Could not execve %s" execpath
                     end
               end
           | None -> ()
