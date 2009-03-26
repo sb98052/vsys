@@ -15,7 +15,14 @@ object(this)
   (** regex indicating that the script passes fds around *)
   val fd_regex = Str.regexp "fd_"
 
-  method is_fd_passer fname = Str.string_match fd_regex fname 0
+  method is_fd_passer fname = 
+    try let _ = Str.search_forward fd_regex fname 0 
+    in 
+      true
+    with
+      | Not_found -> false 
+      | _ -> false
+
   method get_slice_name () = slice_name
   (** A new script was copied into the backend, make a corresponding entry in
     the frontend.
