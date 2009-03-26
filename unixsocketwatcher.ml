@@ -53,6 +53,8 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                         in
                             logprint "Could not execve %s" execpath
                     end
+                  else
+                    close_if_open(data_socket)
               end
           | None -> ()
     with e-> logprint "Error accepting socket\n"
