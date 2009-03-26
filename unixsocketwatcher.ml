@@ -13,6 +13,8 @@ open Globals
 open Fdwatcher
 open Printf
 
+exception Exec_failed
+
 let close_if_open fd = (try (ignore(close fd);) with _ -> ())
 
 type control_path_name = string
@@ -48,7 +50,9 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
                           for i = 3 to 1023 do
                             if (i != fd) then close_if_open(Obj.magic i)
                           done;
-                            execv execpath [|execpath;slice_name;sprintf "%d" fd|] (*with
+                            execv execpath [|execpath;slice_name;sprintf "%d" fd|];
+                            raise Exec_failed
+                        (*with
                                 Unix_error(num,str1,str2)->logprint "Error %d: %s (%s)" (Obj.magic num) str1 str2;raise (Unix_error(num,str1,str2))*)
                         in
                             logprint "Could not execve %s" execpath
