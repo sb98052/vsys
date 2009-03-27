@@ -53,7 +53,7 @@ let list_check lst elt _ =
   in
     list_check_rec lst
 
-let openentry_int fifoin =
+let fs_openentry fifoin =
   let fdin =
     try openfile fifoin [O_RDONLY;O_NONBLOCK] 0o777 with 
         e->logprint "Error opening and connecting FIFO: %s,%o\n" fifoin 0o777;raise e
@@ -63,7 +63,7 @@ let openentry_int fifoin =
 (** Open entry safely, by first masking out the file to be opened *)
 let openentry_safe root_dir fqp_in backend_spec =
   let restore = move_gate fqp_in in
-  let fd_in = openentry_int restore in
+  let fd_in = fs_openentry restore in
     move_ungate fqp_in restore;
     let (fqp,slice_name) = backend_spec in
       Hashtbl.replace direct_fifo_table fqp_in (Some(root_dir,fqp,slice_name,fd_in))
@@ -164,7 +164,11 @@ let sigchld_handle s =
   in
     reap_all_processes()
                 
-
+(** The backendhandler class: defines event handlers for events in
+the backend backend directory.
+  @param dir_root The location of the backend in the server context (eg. root context for vservers)
+  @param frontend_list List of frontends to serve with this backend
+  *)
 let rec add_dir_watch fqp =
   Dirwatcher.add_watch fqp [S_Open] direct_fifo_handler
 and
