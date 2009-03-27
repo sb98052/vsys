@@ -33,10 +33,12 @@ let pidmap: (int,in_pathname * Unix.file_descr) Hashtbl.t = Hashtbl.create 1024
 
 let move_gate fname =
   let tmpfname=String.concat "." [fname;"tmp"] in 
+    (* XXX add a check *)
     Unix.rename fname tmpfname;
     tmpfname
 
 let move_ungate fname restore =
+  (* XXX add a check *)
   Unix.rename restore fname
 
 let list_check lst elt _ =
@@ -119,11 +121,13 @@ let mkentry fqp abspath perm uname =
     (try 
        let infname =(sprintf "%s.in" fqp) in
        let outfname =(sprintf "%s.out" fqp) in
+         (* XXX add checks *)
          Unix.mkfifo infname 0o666;
          Unix.mkfifo outfname 0o666;
          ( (* Make the user the owner of the pipes in a non-chroot environment *)
            if (!Globals.nochroot) then
              let pwentry = Unix.getpwnam uname in
+               (* XXX add checks *)
                Unix.chown infname pwentry.pw_uid pwentry.pw_gid; 
                Unix.chown outfname pwentry.pw_uid pwentry.pw_gid
          );
@@ -143,13 +147,23 @@ let closeentry fqp =
           Hashtbl.remove direct_fifo_table fqp_in
 
 let sigchld_handle s =
-  let pid,_=Unix.waitpid [Unix.WNOHANG] 0 in
-    try
-      let fqp_in,fd_out = Hashtbl.find pidmap pid in
+  let rec reap_all_processes () =
+    let pid,_= try Unix.waitpid [Unix.WNOHANG] 0 with _ -> (-1,WEXITED(-1)) in
+      if (pid > 0) then
         begin
-          reopenentry fqp_in
+          begin
+            try
+              let fqp_in,fd_out = Hashtbl.find pidmap pid in
+                begin
+                  reopenentry fqp_in
+                end
+            with _ -> ()
+          end;
+          reap_all_processes ()
         end
-    with _ -> ()
+  in
+    reap_all_processes()
+                
 
 let rec add_dir_watch fqp =
   Dirwatcher.add_watch fqp [S_Open] direct_fifo_handler

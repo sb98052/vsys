@@ -39,7 +39,7 @@ let receive_event (listening_socket_spec:fname_and_fd) (_:fname_and_fd) =
           |None -> logprint "Received unexpected socket event\n";()
           |Some (execpath, slice_name) ->
               begin
-                let child = fork () in
+                let child = try fork () with _ -> -1 in
                   if (child == 0) then
                     begin
                       (* Child *)
