@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.7
-%define taglevel 26
+%define taglevel 27
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Mon Mar 30 2009 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.7-27
+- fix logrotate config
+
 * Tue Feb 24 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-26
 - Tagging to force an update.
 
