@@ -1,7 +1,7 @@
 (** Some things that didn't fit in elsewhere *)
 let backend = ref ""
 let debug = ref true
-let vsys_version = "0.9"
+let vsys_version = "0.95"
 let nochroot = ref false
 let conffile = ref ""
 let pid_filepath = ref "/var/run/vsys.pid"
