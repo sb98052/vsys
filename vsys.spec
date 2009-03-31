@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.9
-%define taglevel 0
+%define taglevel 1
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,16 @@ fi
 %postun
 
 %changelog
+* Tue Mar 31 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.9-1
+- * The main change in version 0.9 is file-descriptor passing support. The way this works in Vsys is that you write a
+- script whose name has the prefix "fd_". Such scripts show up within slices as ".control" files and can be used to
+- exchange file descriptors with root context. Vsys scripts inherit the socket that corresponds to this channel, so they
+- do not need to deal with connection setup and teardown. Please see vsys-wrappers/ and vsys-factory/fuse,
+- vsys-factory/bm_socket for more details.
+- * Version 0.9 is the current stable version of Vsys. It has a fix for a vulnerability in 0.7, and has undergone a
+- stability audit.
+- * Version 0.95 (trunk) is the new development version.
+
 * Tue Feb 24 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.7-26
 - Tagging to force an update.
 
