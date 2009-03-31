@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.9
-%define taglevel 1
+%define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
