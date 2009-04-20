@@ -1,22 +1,18 @@
 #!/bin/sh +x
 
-IP=/sbin/ip
-
 SLICE=$1
 SLICEID=`id -u $SLICE`
 read KEY
 
-modprobe etun
-
 ### Setup etun
 ETUN0=nat$KEY
 ETUN1=natx$KEY
-echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
+ip link add name $ETUN0 type veth peer name $ETUN1
 ifconfig $ETUN1 10.0.$KEY.1 up
 
-/sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-/sbin/iptables -A FORWARD -i eth0 -o $ETUN1 -m state --state RELATED,ESTABLISHED -j ACCEPT
-/sbin/iptables -A FORWARD -i $ETUN1 -o eth0 -j ACCEPT
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+iptables -A FORWARD -i eth0 -o $ETUN1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -i $ETUN1 -o eth0 -j ACCEPT
 
 ### Create "grab link" script
 GRAB=/vsys/local_grab-$ETUN0
@@ -27,7 +23,7 @@ cat > $GRAB <<EOF
 
 read PID
 
-chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid 
+ip link set $ETUN0 netns $PID 
 EOF
 chmod +x $GRAB
 
@@ -41,12 +37,12 @@ cat > $DELETE <<EOF
 read NULL
 
 # Remove iptables rules
-/sbin/iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
-/sbin/iptables -D FORWARD -i eth0 -o $ETUN1 -m state --state RELATED,ESTABLISHED -j ACCEPT
-/sbin/iptables -D FORWARD -i $ETUN1 -o eth0 -j ACCEPT
+iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+iptables -D FORWARD -i eth0 -o $ETUN1 -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -D FORWARD -i $ETUN1 -o eth0 -j ACCEPT
 
 # Get rid of etun devices, only need name of one of them
-echo $ETUN1 > /sys/module/etun/parameters/delif
+ip link delete dev $ETUN1 
 
 # Clean up files
 rm -f $GRAB $GRAB.acl

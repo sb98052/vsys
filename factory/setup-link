@@ -1,7 +1,5 @@
 #!/bin/sh +x
 
-IP=/sbin/ip
-
 SLICE=$1
 SLICEID=`id -u $SLICE`
 read INDEX
@@ -11,17 +9,16 @@ read KEY
 LINK=${KEY}if${INDEX}
 
 modprobe ip_gre
-modprobe etun
 
 ### Setup EGRE tunnel
 EGRE=d$LINK
-$IP tunnel add $EGRE  mode gre/eth remote $REMOTE key $KEY
-$IP link set $EGRE up
+ip tunnel add $EGRE  mode gre type eth remote $REMOTE key $KEY ttl 64
+ip link set $EGRE up
 
 ### Setup etun
 ETUN0=a$LINK
 ETUN1=b$LINK
-echo $ETUN0,$ETUN1 > /sys/module/etun/parameters/newif
+ip link add name $ETUN0 type veth peer name $ETUN1
 ifconfig $ETUN0 mtu 1458 up
 ifconfig $ETUN1 up
 
@@ -44,7 +41,7 @@ cat > $GRAB <<EOF
 
 read PID
 
-chcontext --ctx 1 -- echo \$PID > /sys/class/net/$ETUN0/new_ns_pid 
+ip link set $ETUN0 netns $PID
 EOF
 chmod +x $GRAB
 
@@ -79,7 +76,7 @@ read NULL
 iptables -t mangle -D FORWARD -o $BRIDGE -j MARK --set-mark $SLICEID
 
 # Get rid of etun devices, only need name of one of them
-echo $ETUN1 > /sys/module/etun/parameters/delif
+ip link delete dev $ETUN1 
 
 # Get rid of bridge
 ifconfig $BRIDGE down
