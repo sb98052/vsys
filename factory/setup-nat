@@ -23,7 +23,7 @@ cat > $GRAB <<EOF
 
 read PID
 
-ip link set $ETUN0 netns $PID 
+ip link set $ETUN0 netns \$PID 
 EOF
 chmod +x $GRAB
 
