@@ -8,7 +8,7 @@ read KEY
 ETUN0=nat$KEY
 ETUN1=natx$KEY
 ip link add name $ETUN0 type veth peer name $ETUN1
-ifconfig $ETUN1 10.0.$KEY.1 up
+ifconfig $ETUN1 10.0.$KEY.1/24 up
 
 iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 iptables -A FORWARD -i eth0 -o $ETUN1 -m state --state RELATED,ESTABLISHED -j ACCEPT
