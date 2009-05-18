@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.9
-%define taglevel 2
+%define taglevel 3
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Mon May 18 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.9-3
+- The previous tag (0.9-2) doesn't build. This one is tested to build and install (or rather, upgrade) fine with the previous version of vsys.
+
 * Mon May 18 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.9-2
 - Getting rid of factory scripts from the main vsys. They now live elsewhere.
 
