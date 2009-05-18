@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.9
-%define taglevel 1
+%define taglevel 2
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Mon May 18 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.9-2
+- Getting rid of factory scripts from the main vsys. They now live elsewhere.
+
 * Tue Mar 31 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.9-1
 - * The main change in version 0.9 is file-descriptor passing support. The way this works in Vsys is that you write a
 - script whose name has the prefix "fd_". Such scripts show up within slices as ".control" files and can be used to
