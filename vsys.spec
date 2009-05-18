@@ -63,7 +63,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 /usr/bin/vsys
 /etc/init.d/vsys
-/vsys/*
+/vsys
 %config(noreplace) /etc/vsys.conf
 %{_sysconfdir}/logrotate.d/vsys
 
