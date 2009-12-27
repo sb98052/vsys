@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.9
-%define taglevel 3
+%define taglevel 4
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Sun Dec 27 2009 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.9-4
+- fix build for f12
+
 * Mon May 18 2009 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.9-3
 - The previous tag (0.9-2) doesn't build. This one is tested to build and install (or rather, upgrade) fine with the previous version of vsys.
 
