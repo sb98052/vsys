@@ -93,13 +93,20 @@ let connect_file fqp_in =
               try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
                   _-> (* The client is opening the descriptor too fast *)
                     sleep 1;try openfile fqp_out [O_WRONLY;O_NONBLOCK] 0o777 with
-                        _->
-                        logprint "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;stdout
+                      _->
+                        logprint "%s Output pipe not open, using stdout in place of %s\n" slice_name fqp_out;
+                        logprint "Check if vsys script %s is executable\n" execpath;
+                        stdout
             in
               ignore(sigprocmask SIG_BLOCK [Sys.sigchld]);
               (
                 clear_nonblock fifo_fdin;
-                let pid=try Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) with e -> None in
+                let pid = 
+                  try
+                    Some(create_process execpath [|execpath;slice_name|] fifo_fdin fifo_fdout fifo_fdout) 
+                  with 
+                    e -> logprint "Error executing %s for slice %s\n" execpath slice_name; None
+                in
                   match pid with 
                     | Some(pid) ->
                         if (fifo_fdout <> stdout) then close_if_open fifo_fdout;
