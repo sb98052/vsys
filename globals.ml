@@ -9,7 +9,7 @@ let log_filepath = ref "/var/log/vsys"
 let failsafe = ref false
 
 let logfd = ref Pervasives.stdout
-let logprint fmt = Printf.fprintf !logfd (fmt ^^ "%!")
+let logprint fmt = Printf.printf fmt
 let debprint fmt = if (!debug) then Printf.fprintf !logfd (fmt ^^ "%!")
 let print fmt = Printf.printf (fmt ^^ "%!")
 

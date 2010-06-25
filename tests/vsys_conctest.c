@@ -11,8 +11,8 @@ int main()
 {
   FILE *fp = NULL, *fp_in = NULL;
   FILE *out_fp = NULL, *diff_fp = NULL;
-  const char* topcmd = "fe/test.out";
-  const char* top_in_file = "fe/test.in";
+  const char* topcmd = "frontend/test.out";
+  const char* top_in_file = "frontend/test.in";
   char buf[4096];
   int fd_in = -1, fd_out;
   int res;
