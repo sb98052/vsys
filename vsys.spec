@@ -10,7 +10,7 @@
 
 %define name vsys
 %define version 0.9
-%define taglevel 4
+%define taglevel 5
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -77,6 +77,9 @@ fi
 %postun
 
 %changelog
+* Mon Jul 05 2010 Baris Metin <Talip-Baris.Metin@sophia.inria.fr> - vsys-0.9-5
+- fix dependencies and docs generation
+
 * Sun Dec 27 2009 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.9-4
 - fix build for f12
 
