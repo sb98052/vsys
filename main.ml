@@ -25,6 +25,10 @@ let cmdspeclist =
     ("-failsafe",Arg.Set(Globals.failsafe), "Never crash. Be stupid, but never crash. Use at your own risk.");
   ]
 
+let sighup_handle s =
+  print "Received sighup. Running GC major pass";
+  Gc.major ()
+
 let _ =
   Arg.parse cmdspeclist (fun x->()) "Usage: vsys <list of mount points>";  
   Globals.logfd:=open_out_gen [Open_append;Open_creat] 0o644 !log_filepath;
@@ -54,6 +58,8 @@ let _ =
           let frontends = Conffile.read_frontends !Globals.conffile in
             input_file_list:=List.concat [!input_file_list;frontends]
         end;
+
+      Sys.set_signal Sys.sigusr1 (Sys.Signal_handle sighup_handle);
 
       let felst = List.map 
                     (fun lst->let (x,y)=lst in 

@@ -162,7 +162,8 @@ let sigchld_handle s =
             try
               let fqp_in,fd_out = Hashtbl.find pidmap pid in
                 begin
-                  reopenentry fqp_in
+                  reopenentry fqp_in;
+                  Hashtbl.remove pidmap pid
                 end
             with _ -> ()
           end;
