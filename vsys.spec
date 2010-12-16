@@ -9,7 +9,7 @@
 %define url $URL$
 
 %define name vsys
-%define version 0.95
+%define version 0.99
 %define taglevel 0
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
