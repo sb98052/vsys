@@ -34,7 +34,7 @@ include .dep
 
 docs: *.ml
 	ocamldoc -d . -html -o docs *.ml
-	mv *.html *.css docs
+	mkdir -p docs;mv *.html *.css docs
 
 ocaml_inotify-0.4/inotify.cmxa:
 	$(MAKE) -C ocaml_inotify-0.4 && cp -f ocaml_inotify-0.4/inotify_stubs.o ./
