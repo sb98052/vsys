@@ -2,11 +2,6 @@
 # Vsys filesystem
 #
 # RPM spec file
-#
-# $Id$
-#
-
-%define url $URL$
 
 %define name vsys
 %define version 0.9
@@ -17,7 +12,7 @@
 Vendor: PlanetLab
 Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
-URL: %(echo %{url} | cut -d ' ' -f 2)
+URL: %{SCMURL}
 
 Summary: Vsys filesystem 
 Name: %{name}
