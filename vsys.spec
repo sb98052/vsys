@@ -39,33 +39,47 @@ invoke services installed by the PlanetLab administration. Slices invoke and
 interact with these services through fifo pipes. Services can be added and
 removed dynamically.
 
+%package -n vsyssh
+Summary: Vsys client
+Group: System Environment/Libraries
+
+%description -n vsyssh
+vsyssh is a simple shell to use vsys through.
+
 %prep
 %setup
 
 %build
 rm -rf $RPM_BUILD_ROOT
 make
+make -C vsyssh
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/bin
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 mkdir -p $RPM_BUILD_ROOT/vsys
 #cp factory/* $RPM_BUILD_ROOT/vsys
-cp vsys $RPM_BUILD_ROOT/usr/bin
-cp vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
-cp vsys.conf $RPM_BUILD_ROOT/etc
+cp -p vsys $RPM_BUILD_ROOT/usr/bin
+cp -p vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
+cp -p vsys.conf $RPM_BUILD_ROOT/etc
+cp -p vsyssh/vsyssh $RPM_BUILD_ROOT/usr/bin
 
-install -D -m 644 vsys.logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/vsys
+install -D -p -m 644 vsys.logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/vsys
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
+%defattr(-,root,root,-)
 /usr/bin/vsys
 /etc/init.d/vsys
 /vsys
 %config(noreplace) /etc/vsys.conf
 %{_sysconfdir}/logrotate.d/vsys
+
+%files -n vsyssh
+%defattr(-,root,root,-)
+/usr/bin/vsyssh
 
 %post
 chkconfig --add vsys

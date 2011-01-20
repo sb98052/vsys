@@ -56,7 +56,7 @@ install: vsys
 	cp vsys $(INSTALL_DIR)/usr/bin
 	cp vsys-initscript $(INSTALL_DIR)/etc/init.d/vsys 
 
-dep:
+.dep:
 	ocamldep *.ml > .dep
 
 clean:
