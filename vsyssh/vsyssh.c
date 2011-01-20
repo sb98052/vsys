@@ -47,42 +47,49 @@ int main(int argc, char **argv, char **envp)
 		strcat(outf,".out");
 
 		vfd0 = open(outf,O_RDONLY|O_NONBLOCK);
-		printf("Out file: %d\n",vfd0);
 		vfd1 = open(inf,O_WRONLY);
-		printf("In file: %d\n",vfd1);
 
 		if (vfd0==-1 || vfd1 == -1) {
 			printf("Error opening vsys entry %s (%s)\n", argv[1],strerror(errno));
 			exit(1);
 		}
 
+		if (fcntl(vfd0, F_SETFL, O_RDONLY) == -1) {
+			printf("Error making pipe blocking: %m\n");
+			exit(1);
+		}
+
 		if (argc<3) {
 			fd_set set;
-			FD_ZERO(&set);
-			FD_SET(0, &set);
-			FD_SET(vfd0, &set);
+			char do_input = 1, do_output = 1;
 
 			while (1)
-			 {
+			{
 				int ret;
 				printf("vsys>");fflush(stdout);
-				FD_SET(0, &set);
-				FD_SET(vfd0, &set);
+				FD_ZERO(&set);
+				if (do_input)
+					FD_SET(0, &set);
+				if (do_output)
+					FD_SET(vfd0, &set);
 				ret = select(vfd0+1, &set, NULL, NULL, NULL);
 				if (FD_ISSET(0,&set)) {
 					char lineread[2048];
 					int ret;
 					ret=read(0,lineread,2048);
+					if (ret == 0)
+						do_input = 0;
 					lineread[ret]='\0';
 					printf ("writing %s\n",lineread);
 					write(vfd1,lineread,ret);
-					FD_CLR(0,&set);
-				} if (FD_ISSET(vfd0,&set)) {
+				}
+				if (FD_ISSET(vfd0,&set)) {
 					char lineread[2048];
 					int ret;
-					ret=read(vfd0,lineread,2048);
+					ret = read(vfd0,lineread,2048);
+					if (ret == 0)
+						break;
 					write(1,lineread,ret);
-					FD_CLR(vfd0,&set);
 				}
 			}
 
@@ -93,10 +100,10 @@ int main(int argc, char **argv, char **envp)
 
 			dup2(vfd0,0);
 			dup2(vfd1,1);
-			execve(argv[3],argv+3,envp);
+			execve(argv[2],argv+2,envp);
 		}
        }
 
-       return;
+       return -1;
 
 }
