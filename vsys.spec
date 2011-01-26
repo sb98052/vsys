@@ -2,11 +2,6 @@
 # Vsys filesystem
 #
 # RPM spec file
-#
-# $Id$
-#
-
-%define url $URL$
 
 %define name vsys
 %define version 0.99
@@ -17,7 +12,7 @@
 Vendor: PlanetLab
 Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
-URL: %(echo %{url} | cut -d ' ' -f 2)
+URL: %{SCMURL}
 
 Summary: Vsys filesystem 
 Name: %{name}
@@ -29,7 +24,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 #Requires: 
 BuildRequires: inotify-tools-devel
 BuildRequires: ocaml
-BuildRequires: ocaml-docs
+BuildRequires: ocaml-ocamldoc
 
 Source0: vsys-%{version}.tar.gz
 
