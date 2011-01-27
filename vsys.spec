@@ -5,7 +5,7 @@
 
 %define name vsys
 %define version 0.99
-%define taglevel 0
+%define taglevel 1
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -86,6 +86,10 @@ fi
 %postun
 
 %changelog
+* Thu Jan 27 2011 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.99-1
+- vsyssh is a simple shell to use vsys through, in the vsys-vsyssh rpm
+- fix build dep to require ocaml-ocamldoc instead of ocaml-docs
+
 * Thu Dec 16 2010 Sapan Bhatia <sapanb@cs.princeton.edu> - vsys-0.99-0
 - Fixed a memory leak, mainly. The other changes are simply commits that got lost between the move from svn/head to
 - git/master.
