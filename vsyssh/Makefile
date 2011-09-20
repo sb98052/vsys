@@ -1,4 +1,4 @@
 all: vsyssh
 
 vsyssh: vsyssh.c
-	gcc -g vsyssh.c -o vsyssh
+	gcc -Wall -g vsyssh.c -o vsyssh
