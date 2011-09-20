@@ -1,9 +1,9 @@
 #
-# Vsys filesystem
+# Vsys shell - sliverland utility
 #
 # RPM spec file
 
-%define name vsys
+%define name vsyssh
 %define version 0.99
 %define taglevel 1
 
@@ -14,63 +14,36 @@ Packager: PlanetLab Central <support@planet-lab.org>
 Distribution: PlanetLab %{plrelease}
 URL: %{SCMURL}
 
-Summary: Vsys filesystem 
+Summary: Vsys shell - a sliverland vsys client
 Name: %{name}
 Version: %{version}
 Release: %{release}
 License: GPL
-Group: System Environment/Kernel
+Group: System Environment/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
-#Requires: 
-BuildRequires: inotify-tools-devel
-BuildRequires: ocaml
-BuildRequires: ocaml-ocamldoc
 
 Source0: vsys-%{version}.tar.gz
 
 %description
-vsys is a file-system-based interface that lets slices on PlanetLab safely
-invoke services installed by the PlanetLab administration. Slices invoke and
-interact with these services through fifo pipes. Services can be added and
-removed dynamically.
+vsyssh is a utility designed to be installed in the slivers, a helper to ease the invokation of vsys scripts.
 
-%prep
-%setup
+%prep 
+%setup -q -n vsys-%{version} 
 
 %build
 rm -rf $RPM_BUILD_ROOT
-make
+make -C vsyssh
 
 %install
 mkdir -p $RPM_BUILD_ROOT/usr/bin
-mkdir -p $RPM_BUILD_ROOT/etc/init.d
-mkdir -p $RPM_BUILD_ROOT/vsys
-#cp factory/* $RPM_BUILD_ROOT/vsys
-cp -p vsys $RPM_BUILD_ROOT/usr/bin
-cp -p vsys-initscript $RPM_BUILD_ROOT/etc/init.d/vsys
-cp -p vsys.conf $RPM_BUILD_ROOT/etc
-
-install -D -p -m 644 vsys.logrotate $RPM_BUILD_ROOT/%{_sysconfdir}/logrotate.d/vsys
+cp -p vsyssh/vsyssh $RPM_BUILD_ROOT/usr/bin
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-/usr/bin/vsys
-/etc/init.d/vsys
-/vsys
-%config(noreplace) /etc/vsys.conf
-%{_sysconfdir}/logrotate.d/vsys
-
-%post
-chkconfig --add vsys
-chkconfig vsys on
-if [ "$PL_BOOTCD" != "1" ] ; then
-        service vsys restart
-fi
-
-%postun
+/usr/bin/vsyssh
 
 %changelog
 * Thu Jan 27 2011 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.99-1
