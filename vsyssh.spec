@@ -22,13 +22,14 @@ License: GPL
 Group: System Environment/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
-Source0: vsys-%{version}.tar.gz
+Source0: vsyssh-%{version}.tar.gz
 
 %description
 vsyssh is a utility designed to be installed in the slivers, a helper to ease the invokation of vsys scripts.
 
 %prep 
-%setup -q -n vsys-%{version} 
+#%setup -q -n vsys-%{version} 
+%setup
 
 %build
 rm -rf $RPM_BUILD_ROOT
