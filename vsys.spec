@@ -5,7 +5,7 @@
 
 %define name vsys
 %define version 0.99
-%define taglevel 1
+%define taglevel 2
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -73,6 +73,10 @@ fi
 %postun
 
 %changelog
+* Mon Sep 26 2011 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.99-2
+- split the vsyssh package in a separate specfile
+- so we can preinstall vsyssh in the sliver space
+
 * Thu Jan 27 2011 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.99-1
 - vsyssh is a simple shell to use vsys through, in the vsys-vsyssh rpm
 - fix build dep to require ocaml-ocamldoc instead of ocaml-docs
