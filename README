@@ -45,4 +45,3 @@ called foo.acl). The acl for a script must be located in the same directory as t
 a parent or sub directory). It should be ***CREATED BEFORE THE SCRIPT***. 
 
 contents: names of slices on new lines
-
