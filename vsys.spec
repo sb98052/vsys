@@ -5,7 +5,7 @@
 
 %define name vsys
 %define version 0.99
-%define taglevel 2
+%define taglevel 3
 
 %define release %{taglevel}%{?pldistro:.%{pldistro}}%{?date:.%{date}}
 
@@ -73,6 +73,9 @@ fi
 %postun
 
 %changelog
+* Tue Feb 26 2013 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.99-3
+- only cosmetic changes
+
 * Mon Sep 26 2011 Thierry Parmentelat <thierry.parmentelat@sophia.inria.fr> - vsys-0.99-2
 - split the vsyssh package in a separate specfile
 - so we can preinstall vsyssh in the sliver space
